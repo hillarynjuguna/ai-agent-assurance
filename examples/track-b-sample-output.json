@@ -1,0 +1,65 @@
+{
+  "search_results": [
+    {
+      "work_key": "/works/OL16151990W",
+      "title": "Pricing strategies",
+      "authors": [
+        "Schindler, Robert professor"
+      ],
+      "first_publish_year": 2012,
+      "edition_count": 1,
+      "subjects": [
+        "Marketing",
+        "Pricing"
+      ]
+    },
+    {
+      "work_key": "/works/OL24684963W",
+      "title": "Pricing strategies",
+      "authors": [
+        "Z. John Zhang"
+      ],
+      "first_publish_year": 2005,
+      "edition_count": 1,
+      "subjects": [
+        "Pricing"
+      ]
+    },
+    {
+      "work_key": "/works/OL29033995W",
+      "title": "Pricing Strategies",
+      "authors": [
+        "Robert M. Schindler"
+      ],
+      "first_publish_year": 2013,
+      "edition_count": 3,
+      "subjects": []
+    }
+  ],
+  "wrapper_pattern": {
+    "pattern": "legacy_api_to_mcp",
+    "steps": [
+      "Select a narrow set of high-value API actions.",
+      "Wrap each action in validated Python or TypeScript functions.",
+      "Expose those functions as MCP tools with clear JSON schemas.",
+      "Add auth, rate limits, logging, and human approval for sensitive actions.",
+      "Ship docs, sample prompts, and a test harness."
+    ],
+    "buyer_value": [
+      "Makes the API usable by AI agents without asking customers to read docs.",
+      "Reduces integration friction for AI-native buyers.",
+      "Keeps control over approved actions and data boundaries."
+    ]
+  },
+  "first_work_details": {
+    "work_key": "/works/OL16151990W",
+    "title": "Pricing strategies",
+    "description": "Example response from a legacy REST API after being wrapped into a clean, agent-readable shape.",
+    "subjects": [
+      "Marketing",
+      "Pricing"
+    ],
+    "subject_places": [],
+    "subject_times": []
+  }
+}

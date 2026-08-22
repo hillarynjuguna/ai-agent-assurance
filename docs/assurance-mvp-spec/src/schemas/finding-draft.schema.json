@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FindingDraftOutput",
+  "description": "Structured output for the LLM's finding-drafting step. The evidence_level enum is deliberately restricted to E0/E1 only at the schema level, this is the concrete enforcement of 'the LLM cannot silently convert E0/E1 evidence into E2/E3/E4', it is not just a rule stated in a prompt.",
+  "type": "object",
+  "required": ["findings"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "title", "description", "severity", "confidence",
+          "evidence_level", "framework_reference_code", "authority_map_ref",
+          "basis"
+        ],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": { "enum": ["critical", "high", "medium", "low", "informational"] },
+          "confidence": { "enum": ["low", "moderate", "high"] },
+          "evidence_level": {
+            "enum": ["E0_claimed", "E1_documented"],
+            "description": "HARD CAP. This field structurally cannot express E2 or above. A finding needing higher evidence is drafted at E1 and left for a Reviewer to upgrade after an actual test, never drafted as already validated."
+          },
+          "framework_reference_code": {
+            "type": "string",
+            "description": "e.g. 'ASI03' or an ACSC ISM guideline code. Must come from the seeded FrameworkReference table, the model does not invent codes."
+          },
+          "authority_map_ref": {
+            "type": "object",
+            "description": "Exactly one of node_id or edge_id, this finding must trace to something in the Authority Map, per the traceability invariant.",
+            "properties": {
+              "node_id": { "type": "string" },
+              "edge_id": { "type": "string" }
+            }
+          },
+          "basis": {
+            "type": "string",
+            "description": "Required justification citing the specific intake material this finding is drawn from. A finding without a basis is rejected before it reaches the database."
+          },
+          "self_assessed_certainty_note": {
+            "type": "string",
+            "description": "Optional, free text. NOT a claim the finding is correct, just the model's own hedge for the reviewer's benefit."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

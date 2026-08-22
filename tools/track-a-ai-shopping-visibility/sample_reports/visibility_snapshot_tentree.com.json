@@ -1,0 +1,75 @@
+{
+  "target_url": "https://tentree.com",
+  "domain": "tentree.com",
+  "timestamp": "2026-08-08T12:53:28",
+  "score": 67,
+  "raw_score": 60,
+  "max_score": 90,
+  "error": null,
+  "errors": [],
+  "sampled_product_urls": [
+    "https://tentree.com/products/treeblend-baker-t-shirt-cottage-red-heather",
+    "https://tentree.com/products/treeblend-baker-t-shirt-blue-horizon-heather",
+    "https://tentree.com/products/treeblend-baker-t-shirt-ashwood-heather",
+    "https://tentree.com/products/treeblend-baker-hooded-longsleeve-red-chestnut-heather",
+    "https://tentree.com/products/treeblend-baker-hooded-longsleeve-ashwood-heather"
+  ],
+  "checks": [
+    {
+      "name": "AI crawler accessibility",
+      "score": 15,
+      "max_score": 15,
+      "passed": true,
+      "details": "No sampled AI crawlers appear fully blocked.",
+      "evidence": []
+    },
+    {
+      "name": "Machine-readable catalog endpoint",
+      "score": 15,
+      "max_score": 15,
+      "passed": true,
+      "details": "Found 20 products from /products.json sample.",
+      "evidence": [
+        "https://tentree.com/products/treeblend-baker-t-shirt-cottage-red-heather",
+        "https://tentree.com/products/treeblend-baker-t-shirt-blue-horizon-heather",
+        "https://tentree.com/products/treeblend-baker-t-shirt-ashwood-heather"
+      ]
+    },
+    {
+      "name": "Product-page structured data",
+      "score": 0,
+      "max_score": 25,
+      "passed": false,
+      "details": "0/5 sampled product pages had Product JSON-LD; 0 had price; 0 had availability.",
+      "evidence": []
+    },
+    {
+      "name": "Catalog content completeness",
+      "score": 20,
+      "max_score": 20,
+      "passed": true,
+      "details": "Descriptions: 5/5; images: 5/5; variants: 5/5; tags: 5/5.",
+      "evidence": []
+    },
+    {
+      "name": "Merchant trust and policy signals",
+      "score": 10,
+      "max_score": 10,
+      "passed": true,
+      "details": "Detected trust/policy signals: shipping, returns, contact, reviews, faq",
+      "evidence": []
+    },
+    {
+      "name": "Experimental agent/API manifest",
+      "score": 0,
+      "max_score": 5,
+      "passed": false,
+      "details": "No experimental agent/API manifest detected. This is forward-looking, not currently mandatory.",
+      "evidence": []
+    }
+  ],
+  "recommendations": [
+    "Improve Product and Offer JSON-LD on product pages, including price, availability, SKU, images, and canonical URL.",
+    "Track ACP/AP2/MCP-style discovery standards, but prioritize proven product data and schema fixes first."
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "6.1.0",
+  "schemaName": "Governability Diagnostic Protocol",
+  "generatedAt": "2025-03-10T14:30:00.000Z",
+  "assessment": {
+    "metadata": {
+      "criticality": "financial",
+      "audience": "payment",
+      "company": "Acme Procurement AI",
+      "assessor": "J. Rivera",
+      "confidence": "medium",
+      "date": "2025-03-10",
+      "valid": "2025-06-08"
+    },
+    "dimensions": {
+      "1": { "cap": "2", "evid": "1", "na": "false" },
+      "2": { "cap": "1", "evid": "1", "na": "false" },
+      "3": { "cap": "0", "evid": "0", "na": "false" },
+      "4": { "cap": "1", "evid": "0", "na": "false" },
+      "5": { "cap": "0", "evid": "0", "na": "false" },
+      "6": { "cap": "0", "evid": "0", "na": "false" },
+      "7": { "cap": "1", "evid": "0", "na": "false" },
+      "8": { "cap": "1", "evid": "1", "na": "false" },
+      "9": { "cap": "0", "evid": "0", "na": "false" },
+      "10": { "cap": "0", "evid": "0", "na": "false" }
+    },
+    "notes": {
+      "1": "Procurement actions are tagged as reversible or irreversible at the workflow level, but enforcement is advisory only.",
+      "2": "Basic timestamped logs exist but are mutable by platform admins. No tamper-evident chain.",
+      "3": "No human override path exists. The procurement agent auto-approves orders under $5000 with no intervention option.",
+      "4": "Manual spot-checks performed quarterly. No automated behavioral verification.",
+      "5": "Agents have broad API access. No explicit scope boundaries defined.",
+      "6": "No counterparty risk assessment has been performed. The team is unaware of institutional due diligence requirements.",
+      "7": "Internal architecture docs exist but require deep engineering context to interpret.",
+      "8": "Uses GPT-4 Turbo via Azure OpenAI with a published safety card. No contractual data boundaries.",
+      "9": "Relies on standard IT incident response. No AI-specific playbooks.",
+      "10": "Agents share a single API key with broad permissions. No budget caps or credential scoping."
+    },
+    "summary": {
+      "actions": "1. Implement human approval gate for orders over $1000.\n2. Scope API credentials per agent.\n3. Establish tamper-evident audit trail.\n4. Create AI-specific incident response playbook."
+    }
+  },
+  "diligenceMatrix": {
+    "capabilityScore": 21,
+    "assuranceScore": 9,
+    "quadrant": "risk",
+    "maxCapabilityScore": 84,
+    "maxAssuranceScore": 112,
+    "totalWeight": 28
+  },
+  "narrative": {
+    "confidenceStatement": "Neither operational governance capability (21%) nor institutional assurance (9%) meets minimum expectations. This indicates an 'Insufficient Governance' posture posing a high risk to institutional reliance.\n\nCRITICALITY ADJUSTMENT: Because this operation is classified as Financial, these scores may be insufficient for unconditional deployment. Such systems typically require minimum scores of 80%+ across both axes for institutional acceptance.\n\nASSESSMENT CONFIDENCE NOTE: This audit was performed with partial access. Some artifacts could not be fully verified in production environments.",
+    "priorityGaps": "1. [P0] Blast Radius Exposure: Agents operate without sufficient compartmentalization or hard limits (D10).\n\n2. [P0] Uncontained Autonomy: The system lacks graduated human override at irreversibility boundaries (D3).\n\n3. [P0] Audit Deficit: Without tamper-evident logs (D2), all other systemic guarantees are technically unverifiable.\n\n4. [P1] Reversibility Failure: High-risk operations require strict, systematic irreversibility gating (D1).\n\n5. [P1] Restorative Failure: High-risk operations require dedicated AI incident playbooks (D9).",
+    "relianceRecommendation": "NO RELIANCE",
+    "relianceRationale": "Institutional reliance is NOT recommended. Triggered floor rules: D3 Floor Rule (No human override). These represent non-negotiable prerequisites for counterparty acceptance.",
+    "reassessmentTriggers": "Re-assess within 90 days, or immediately if any of the following occur:\n1. Model version change or vendor update (D8 is not at complete provenance).\n2. New agent behavior or deployment pattern (D4 behavioral verification is not formal).\n3. Introduction of new irreversible action types (D1 reversibility classification is not complete).\n4. Engagement with new counterparty category (bank, insurer, regulator) (D6 risk profile is not validated).\n5. Any incident, near-miss, or drift detection event (high-risk classification)."
+  },
+  "floorRulesTriggered": [
+    "D3 Floor Rule (No Override)",
+    "D10 Floor Rule (No Containment)"
+  ],
+  "regulatoryMapping": {
+    "D1": { "title": "Reversibility Classification", "tags": ["NIST: Map", "ISO 42001 A.6", "EU AI Act Art.9"] },
+    "D2": { "title": "Audit Provenance", "tags": ["NIST: Measure", "ISO 42001 Cl.9", "EU AI Act Art.12"] },
+    "D3": { "title": "Human Override Capability", "tags": ["NIST: Manage", "ISO 42001 A.3.2", "EU AI Act Art.14"] },
+    "D4": { "title": "Behavioral Verification", "tags": ["NIST: Measure", "ISO 42001 A.5", "EU AI Act Art.11"] },
+    "D5": { "title": "Delegation Boundaries", "tags": ["NIST: Govern", "ISO 42001 A.2", "EU AI Act Art.9"] },
+    "D6": { "title": "Counterparty Risk Profile", "tags": ["Institutional DD"] },
+    "D7": { "title": "Institutional Legibility", "tags": ["NIST: Govern", "ISO 42001 A.7.5", "EU AI Act Art.13"] },
+    "D8": { "title": "Model Provenance & Supply Chain", "tags": ["NIST: Map", "ISO 42001 A.6/A.7", "EU AI Act Art.10"] },
+    "D9": { "title": "Incident Response", "tags": ["NIST: Manage", "ISO 42001 A.6.2.6", "EU AI Act Art.9/17"] },
+    "D10": { "title": "Containment & Blast Radius", "tags": ["NIST: Manage", "ISO 42001 A.3.2/A.7.4", "EU AI Act Art.9"] }
+  }
+}

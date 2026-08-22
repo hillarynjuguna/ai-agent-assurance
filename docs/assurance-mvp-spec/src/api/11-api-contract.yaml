@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: AI Agent Assurance Assessment API
+  version: 0.1.0
+  description: >
+    Phase 15/D. Not the prompt's suggested endpoint list verbatim, revised
+    against the actual domain model: separate evidence-upgrade and review
+    endpoints, since those are different actors with different authorization
+    rules, and a findings-list endpoint scoped by assessment rather than global.
+paths:
+  /clients:
+    post: { summary: Create a client, operationId: createClient }
+  /clients/{clientId}/systems:
+    post: { summary: Register a system under a client, operationId: createSystem }
+  /systems/{systemId}/assessments:
+    post: { summary: Start an assessment at a given level, operationId: createAssessment }
+  /assessments/{assessmentId}/intake:
+    post:
+      summary: Submit intake material, triggers Architecture Extraction
+      operationId: submitIntake
+      description: Accepts raw documents/config. Returns extraction output for operator review BEFORE it is committed to the Authority Map, per the schema's traceability requirement, extraction is proposed, not auto-applied.
+  /assessments/{assessmentId}/authority-map:
+    get: { summary: Fetch the current Authority Map, operationId: getAuthorityMap }
+    post: { summary: Commit reviewed nodes/edges from an extraction result, operationId: commitAuthorityMap }
+  /assessments/{assessmentId}/diagnostics/run:
+    post:
+      summary: Run deterministic rules + LLM-assisted finding drafting against the committed Authority Map
+      operationId: runDiagnostics
+      description: Produces Finding rows at evidence_level E0/E1 only. Idempotent, re-running does not duplicate open findings for the same authority-map element and framework reference.
+  /assessments/{assessmentId}/findings:
+    get: { summary: List findings for an assessment, operationId: listFindings }
+  /findings/{findingId}/evidence:
+    post:
+      summary: Attach an Evidence record to a finding
+      operationId: attachEvidence
+      description: submitted_by_type is set server-side from the authenticated caller, NEVER read from the request body, regardless of what the client sends.
+  /findings/{findingId}/review:
+    post:
+      summary: Record a ReviewDecision (accept/reject/modify/request_more_evidence/downgrade_confidence/upgrade_evidence)
+      operationId: reviewFinding
+      description: Requires an authenticated reviewer identity and non-empty reasoning. This is the only path that can move a finding's evidence_level to E2+, and only when the attached decision references a qualifying Evidence row.
+  /assessments/{assessmentId}/status:
+    post:
+      summary: Transition assessment status
+      operationId: transitionAssessmentStatus
+      description: Server rejects a transition to report_ready if any finding above the configured severity threshold lacks a ReviewDecision, for Level 2/3 assessments. Level 1 assessments skip this gate by design.
+  /assessments/{assessmentId}/report:
+    post: { summary: Generate the report, operationId: generateReport }
+    get: { summary: Fetch the generated report, operationId: getReport }

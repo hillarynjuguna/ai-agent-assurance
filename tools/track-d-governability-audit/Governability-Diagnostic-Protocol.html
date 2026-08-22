@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Trust Readiness Diagnostic v6.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --surface-color: rgba(25, 28, 41, 0.7);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8f9fa;
+            --text-secondary: #a0aabf;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --neutral: #64748b;
+            --evidence-color: #14b8a6;
+            --matrix-ready: rgba(16, 185, 129, 0.1);
+            --matrix-gap: rgba(245, 158, 11, 0.1);
+            --matrix-emerge: rgba(99, 102, 241, 0.1);
+            --matrix-risk: rgba(239, 68, 68, 0.1);
+            --matrix-trans: rgba(255, 255, 255, 0.03);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(20, 184, 166, 0.05) 0%, transparent 50%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+        header { text-align: center; margin-bottom: 50px; animation: fadeInDown 0.8s ease-out; }
+        h1 {
+            font-size: 2.5rem; font-weight: 700; margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff, #a0aabf);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: var(--text-secondary); font-size: 1.1rem; font-weight: 300; }
+        .autosave-indicator { font-size: 0.8rem; color: var(--success); margin-top: 10px; opacity: 0.8; transition: opacity 0.3s; }
+        .glass-panel {
+            background: var(--surface-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--surface-border); border-radius: 16px; padding: 30px; margin-bottom: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+        .dimension-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 15px; border-bottom: 1px solid var(--surface-border);
+            padding-bottom: 15px; gap: 15px;
+        }
+        .dimension-title {
+            font-size: 1.4rem; font-weight: 600; color: #fff; margin: 0;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 10px; line-height: 1.4;
+        }
+        .dim-weight {
+            font-size: 0.7rem; background: rgba(255,255,255,0.08); padding: 3px 8px;
+            border-radius: 4px; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.5px; white-space: nowrap;
+        }
+        .reg-tag {
+            font-size: 0.65rem; background: rgba(99, 102, 241, 0.15); color: #a5b4fc;
+            padding: 2px 6px; border-radius: 4px; font-weight: 500; letter-spacing: 0.3px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+        .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .action-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-secondary);
+            font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s; font-family: inherit;
+        }
+        .action-btn:hover, .action-btn:focus { background: rgba(255,255,255,0.1); color: #fff; outline: none; border-color: rgba(255,255,255,0.4); }
+        .action-btn.na-selected { background: rgba(100, 116, 139, 0.3); color: #fff; border-color: var(--neutral); }
+        .dimension-question { font-style: italic; color: var(--text-secondary); margin-bottom: 25px; font-size: 1.05rem; }
+        .sub-axis-title {
+            font-size: 0.9rem; font-weight: 600; color: #fff; margin-bottom: 12px;
+            text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;
+        }
+        .sub-axis-title.cap-title { color: var(--accent-color); }
+        .sub-axis-title.evid-title { color: var(--evidence-color); margin-top: 25px; }
+        .scoring-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 10px; }
+        .score-option {
+            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--surface-border); border-radius: 8px;
+            padding: 14px; cursor: pointer; transition: all 0.2s ease; position: relative;
+            text-align: left; color: inherit; font-family: inherit; display: block; width: 100%; font-size: 0.95rem;
+        }
+        .score-option:hover, .score-option:focus { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.25); outline: none; }
+        .cap-grid .score-option.selected { background: rgba(99, 102, 241, 0.15); border-color: var(--accent-color); box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
+        .evid-grid .score-option.selected { background: rgba(20, 184, 166, 0.15); border-color: var(--evidence-color); box-shadow: 0 0 15px rgba(20, 184, 166, 0.2); }
+        .score-value { font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); display: block; }
+        .score-desc { font-size: 0.82rem; color: var(--text-secondary); display: block; line-height: 1.4; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 8px; color: var(--text-secondary); }
+        textarea, input[type="text"], input[type="date"], select {
+            width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--surface-border);
+            border-radius: 8px; padding: 12px; color: var(--text-primary); font-family: 'Inter', sans-serif;
+            font-size: 0.95rem; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; color-scheme: dark;
+        }
+        select option { background: var(--bg-color); color: var(--text-primary); }
+        textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+        textarea { resize: vertical; min-height: 80px; }
+        .results-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .matrix-wrapper {
+            background: rgba(0, 0, 0, 0.2); border: 1px solid var(--surface-border); border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column; align-items: center;
+        }
+        .matrix-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; color: #fff; }
+        .scatter-plot {
+            width: 300px; height: 300px; position: relative; background: var(--matrix-trans);
+            border-left: 2px solid var(--surface-border); border-bottom: 2px solid var(--surface-border);
+            margin-left: 20px; margin-bottom: 20px;
+        }
+        .quadrant { position: absolute; pointer-events: none; }
+        .quad-ready { bottom: 70%; left: 70%; width: 30%; height: 30%; background: var(--matrix-ready); }
+        .quad-gap { bottom: 0%; left: 70%; width: 30%; height: 40%; background: var(--matrix-gap); }
+        .quad-emerge { bottom: 70%; left: 0%; width: 40%; height: 30%; background: var(--matrix-emerge); }
+        .quad-risk { bottom: 0%; left: 0%; width: 40%; height: 40%; background: var(--matrix-risk); }
+        .grid-line-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.05); border-top: 1px dashed rgba(255,255,255,0.1); }
+        .grid-line-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.05); border-left: 1px dashed rgba(255,255,255,0.1); }
+        .line-40 { bottom: 40%; } .line-70 { bottom: 70%; }
+        .vline-40 { left: 40%; } .vline-70 { left: 70%; }
+        .axis-label { position: absolute; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .x-axis-label { bottom: -25px; left: 50%; transform: translateX(-50%); color: var(--accent-color); }
+        .y-axis-label { left: -35px; top: 50%; transform: translateY(-50%) rotate(-90deg); color: var(--evidence-color); }
+        .axis-tick { position: absolute; font-size: 0.6rem; color: rgba(255,255,255,0.3); }
+        .tick-x-40 { bottom: -15px; left: 40%; transform: translateX(-50%); }
+        .tick-x-70 { bottom: -15px; left: 70%; transform: translateX(-50%); }
+        .tick-y-40 { left: -20px; bottom: 40%; transform: translateY(50%); }
+        .tick-y-70 { left: -20px; bottom: 70%; transform: translateY(50%); }
+        .matrix-dot {
+            position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%;
+            transform: translate(-50%, 50%); bottom: 0%; left: 0%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px var(--accent-color);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10; display: none;
+        }
+        .matrix-dot.ready { box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 25px var(--success); background: var(--success); }
+        .matrix-dot.gap { box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 25px var(--warning); background: var(--warning); }
+        .matrix-dot.emerge { box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 25px var(--accent-color); background: var(--accent-color); }
+        .matrix-dot.risk { box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 25px var(--danger); background: var(--danger); }
+        .matrix-dot.trans { box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 25px #f97316; background: #f97316; }
+        .matrix-dot.unverifiable { box-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 25px var(--neutral); background: var(--neutral); }
+        .quad-label { position: absolute; font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700; text-align: center; }
+        .label-ready { top: 10px; right: 10px; }
+        .label-gap { bottom: 10px; right: 10px; }
+        .label-emerge { top: 10px; left: 10px; }
+        .label-risk { bottom: 10px; left: 10px; }
+        .narrative-wrapper { display: flex; flex-direction: column; justify-content: center; }
+        .sticky-summary {
+            position: sticky; bottom: 20px; background: rgba(15, 17, 26, 0.95); backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px); border: 1px solid var(--surface-border); border-radius: 12px;
+            padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(0, 0, 0, 0.3);
+            z-index: 100; animation: slideUp 0.8s ease-out 0.5s backwards; flex-wrap: wrap; gap: 15px;
+        }
+        .score-display { display: flex; align-items: center; gap: 30px; }
+        .meter-group { display: flex; flex-direction: column; }
+        .meter-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 2px; }
+        .meter-value { font-size: 2.2rem; font-weight: 700; }
+        .meter-value.cap-val { color: var(--accent-color); }
+        .meter-value.assur-val { color: var(--evidence-color); }
+        .posture { display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 25px; }
+        .posture-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); }
+        .posture-value { font-size: 1.2rem; font-weight: 600; color: var(--danger); transition: color 0.3s ease; }
+        .floor-rule-warning { display: none; font-size: 0.78rem; color: var(--danger); margin-top: 4px; font-weight: 500; max-width: 280px; line-height: 1.3; }
+        .btn {
+            background: var(--accent-color); color: white; border: none; padding: 10px 20px; border-radius: 8px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); font-family: inherit; white-space: nowrap;
+        }
+        .btn-outline { background: transparent; border: 1px solid var(--surface-border); color: var(--text-primary); box-shadow: none; }
+        .btn:hover, .btn:focus { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4); outline: none; }
+        .btn-outline:hover, .btn-outline:focus { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); box-shadow: none; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .posture-risk { color: var(--danger); }
+        .posture-emerge { color: var(--accent-color); }
+        .posture-gap { color: var(--warning); }
+        .posture-ready { color: var(--success); }
+        .posture-trans { color: #f97316; }
+        .posture-unverifiable { color: var(--neutral); }
+        .stale-warning {
+            display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger); padding: 12px 16px; border-radius: 8px; font-size: 0.9rem;
+            margin-bottom: 20px; font-weight: 500;
+        }
+        .stale-warning.visible { display: block; }
+        .reliance-box { background: rgba(0,0,0,0.2); border: 1px solid var(--surface-border); border-radius: 8px; padding: 16px; margin-top: 15px; }
+        .reliance-verdict { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+        .reliance-unconditional { color: var(--success); }
+        .reliance-conditional { color: var(--warning); }
+        .reliance-none { color: var(--danger); }
+        .reliance-rationale { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+        @media (max-width: 900px) {
+            .scoring-grid { grid-template-columns: 1fr 1fr; }
+            .sticky-summary { flex-direction: column; gap: 15px; text-align: center; }
+            .score-display { flex-direction: column; gap: 10px; }
+            .posture { border-left: none; padding-left: 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+            .results-container { grid-template-columns: 1fr; }
+            .dimension-header { flex-direction: column; align-items: flex-start; }
+            .header-actions { margin-top: 10px; }
+        }
+        .metadata-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media print {
+            .stale-warning { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+            .reliance-box { border-color: #ccc; background: #f9f9f9; }
+            .print-matrix-summary { display: block !important; }
+            body { background: white; color: black; }
+            .glass-panel { background: white; border: 1px solid #ccc; box-shadow: none; break-inside: avoid; }
+            .sticky-summary { position: static; background: white; box-shadow: none; border: 1px solid #000; margin-top: 30px; }
+            .btn, .action-btn, .autosave-indicator { display: none; }
+            h1 { -webkit-text-fill-color: black; }
+            .score-option:not(.selected) { display: none; }
+            .score-option.selected { background: #f0f0f0; border-color: #000; box-shadow: none; display: block; width: 100%; }
+            textarea, input, select { background: transparent; border: 1px solid #ccc; color: black; }
+            .dim-weight { border: 1px solid #000; color: #000; }
+            .reg-tag { border: 1px solid #000; color: #000; background: #e0e0e0; }
+            .matrix-wrapper { border-color: #000; }
+            .scatter-plot { border-color: #000; background: transparent; }
+            .grid-line-h { border-color: #ccc; }
+            .grid-line-v { border-color: #ccc; }
+            .matrix-dot { background: #000; box-shadow: none; border: 2px solid #fff; }
+            .stale-warning { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+            .reliance-box { border-color: #ccc; background: #f9f9f9; }
+            .print-matrix-summary { display: block !important; }
+        }
+        .print-matrix-summary { display: none; font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
+            .stale-warning {
+            display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger); padding: 12px 16px; border-radius: 8px; font-size: 0.9rem;
+            margin-bottom: 20px; font-weight: 500;
+        }
+        .stale-warning.visible { display: block; }
+        .reliance-box { background: rgba(0,0,0,0.2); border: 1px solid var(--surface-border); border-radius: 8px; padding: 16px; margin-top: 15px; }
+        .reliance-verdict { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+        .reliance-unconditional { color: var(--success); }
+        .reliance-conditional { color: var(--warning); }
+        .reliance-none { color: var(--danger); }
+        .reliance-rationale { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .print-matrix-summary { display: none; font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; font-style: italic; }
+            .trust-gates { margin-top: 30px; display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .trust-gate { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(255,255,255,0.03); border: 1px solid var(--surface-border); border-radius: 8px; }
+        .gate-name { font-weight: 600; font-size: 0.95rem; }
+        .gate-status { font-size: 0.85rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-ready { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.4); }
+        .status-conditional { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+        .status-weak { background: rgba(248, 113, 113, 0.2); color: #fca5a5; border: 1px solid rgba(248, 113, 113, 0.4); }
+        .status-not-ready { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); }
+        .status-gap { background: rgba(100, 116, 139, 0.3); color: var(--text-secondary); border: 1px solid var(--neutral); }
+        .cta-lockbox { margin-top: 40px; background: linear-gradient(145deg, rgba(99,102,241,0.05) 0%, rgba(15,23,42,0.8) 100%); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 30px; position: relative; overflow: hidden; }
+        .cta-lockbox::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent-color), var(--evidence-color)); }
+        .cta-headline { font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 10px; }
+        .cta-sub { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
+        .cta-tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .cta-tier { background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; }
+        .tier-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .tier-price { font-size: 1.5rem; font-weight: 800; color: var(--accent-color); margin-bottom: 15px; }
+        .tier-list { list-style: none; padding: 0; margin: 0 0 20px 0; font-size: 0.85rem; color: var(--text-secondary); flex-grow: 1; }
+        .tier-list li { margin-bottom: 8px; padding-left: 20px; position: relative; }
+        .tier-list li::before { content: '→'; position: absolute; left: 0; color: var(--accent-color); }
+        .cta-btn { background: var(--accent-color); color: #fff; text-align: center; padding: 12px; border-radius: 6px; font-weight: 600; text-decoration: none; transition: background 0.2s; border: none; cursor: pointer; width: 100%; }
+        .cta-btn:hover { background: var(--accent-hover); }
+        .cta-btn-outline { background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); }
+        .cta-btn-outline:hover { background: rgba(99,102,241,0.1); }
+        @media (max-width: 768px) { .cta-tiers { grid-template-columns: 1fr; } }
+    
+        .pill-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .pill-toggle {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--surface-border); color: var(--text-secondary);
+            padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; user-select: none;
+        }
+        .pill-toggle:hover { background: rgba(255, 255, 255, 0.1); }
+        .pill-toggle.active { background: rgba(99, 102, 241, 0.2); border-color: var(--accent-color); color: #fff; }
+        .hero-heading { font-size: 2.2rem; font-weight: 700; margin-bottom: 15px; color: #fff; text-align: center; }
+        .hero-sub { font-size: 1.1rem; color: var(--text-secondary); text-align: center; max-width: 700px; margin: 0 auto 40px; }
+        .dim-counterparty { background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-color); padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        .dim-counterparty-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-color); margin-bottom: 5px; font-weight: 700; }
+        .dim-counterparty-question { font-size: 1.1rem; color: #fff; font-weight: 500; font-style: italic; }
+        .dim-why { margin-bottom: 25px; padding-left: 18px; border-left: 3px solid rgba(255,255,255,0.1); }
+        .dim-why-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 5px; font-weight: 700; }
+        .dim-why-text { font-size: 0.9rem; color: var(--text-secondary); }
+
+    </style>
+<base target="_blank">
+</head>
+<body>
+<div class="container">
+    
+    <div class="hero-section" style="animation: fadeInDown 0.8s ease-out;">
+        <h1 class="hero-heading">Can Your AI Agent Workflow Survive Outside Scrutiny?</h1>
+        <div class="hero-sub">Check whether your agentic workflow is ready for payment processor review, investor diligence, insurer underwriting, enterprise clients, or regulators.</div>
+    </div>
+    
+    <div class="stale-warning" id="stale-warning">
+        This assessment has exceeded its validity period. Re-assessment is required before institutional reliance.
+    </div>
+
+    <div class="glass-panel" style="animation-delay: 0.1s">
+        <h2 style="margin-top: 0; font-size: 1.4rem;">Agent Trust Readiness Diagnostic</h2>
+        
+        <label>Who needs to trust this workflow?</label>
+        <div class="pill-group" id="pill-audiences">
+            <div class="pill-toggle" onclick="togglePill(this)">Payment Processor</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Investor</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Insurer</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Enterprise Client</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Regulator</div>
+        </div>
+        
+        <label>What does the workflow do?</label>
+        <div class="pill-group" id="pill-actions">
+            <div class="pill-toggle" onclick="togglePill(this)">Handles payments</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Sends emails</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Accesses customer data</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Executes purchases</div>
+            <div class="pill-toggle" onclick="togglePill(this)">Makes recommendations</div>
+        </div>
+        
+        <label>Risk level:</label>
+        <div class="pill-group" id="pill-risk">
+            <div class="pill-toggle" onclick="selectSinglePill(this, 'pill-risk'); window.metaRisk = 'Informational'; onMetaChange();">Informational</div>
+            <div class="pill-toggle active" onclick="selectSinglePill(this, 'pill-risk'); window.metaRisk = 'Operational'; onMetaChange();">Operational</div>
+            <div class="pill-toggle" onclick="selectSinglePill(this, 'pill-risk'); window.metaRisk = 'Financial'; onMetaChange();">Financial</div>
+            <div class="pill-toggle" onclick="selectSinglePill(this, 'pill-risk'); window.metaRisk = 'Regulated'; onMetaChange();">Regulated</div>
+            <div class="pill-toggle" onclick="selectSinglePill(this, 'pill-risk'); window.metaRisk = 'Safety-Critical'; onMetaChange();">Safety-Critical</div>
+        </div>
+        
+        <div style="display: none;">
+            <select id="meta-criticality">
+                <option value="operational" selected>Operational</option>
+            </select>
+        </div>
+        
+        <div class="metadata-section" style="margin-top: 20px;">
+            <div class="input-group">
+                <label for="meta-company">Operation Assessed</label>
+                <input type="text" id="meta-company" placeholder="e.g. Quicken AI" oninput="onMetaChange()">
+            </div>
+            <div class="input-group">
+                <label for="meta-date">Assessment Date</label>
+                <input type="date" id="meta-date" onchange="updateValidUntil(); onMetaChange();">
+            </div>
+        </div>
+        <div class="input-group" style="margin-bottom: 0; margin-top: 15px;">
+            <label for="meta-valid">Valid Until (Temporal Expiration)</label>
+            <input type="date" id="meta-valid" onchange="onMetaChange(); checkStale();">
+        </div>
+    </div>
+
+            <div class="input-group">
+                <label for="meta-audience">Target Audience / Diligence Lens</label>
+                <select id="meta-audience" onchange="onMetaChange()">
+                    <option value="general">General Architecture Audit</option>
+                    <option value="payment">Payment Processor / Banking</option>
+                    <option value="investor">Investor Due Diligence</option>
+                    <option value="insurance">Insurance Underwriting</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="meta-company">Operation Assessed</label>
+                <input type="text" id="meta-company" placeholder="e.g. Quicken AI" oninput="onMetaChange()">
+            </div>
+            <div class="input-group">
+                <label for="meta-assessor">Assessor Name</label>
+                <input type="text" id="meta-assessor" placeholder="Name or Agency" oninput="onMetaChange()">
+            </div>
+            <div class="input-group">
+                <label for="meta-confidence">Assessor Confidence (Evidence Access)</label>
+                <select id="meta-confidence" onchange="onMetaChange()">
+                    <option value="high">High (Full telemetry / code access)</option>
+                    <option value="medium">Medium (Partial access / staging only)</option>
+                    <option value="low">Low (Public docs / black box only)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="meta-date">Assessment Date</label>
+                <input type="date" id="meta-date" onchange="updateValidUntil(); onMetaChange();">
+            </div>
+        </div>
+        <div class="input-group" style="margin-bottom: 0; margin-top: 15px;">
+            <label for="meta-valid">Valid Until (Temporal Expiration)</label>
+            <input type="date" id="meta-valid" onchange="onMetaChange(); checkStale();">
+        </div>
+    </div>
+    <form id="diagnostic-form"></form>
+    <div class="glass-panel" style="animation-delay: 0.5s">
+        <h2>Executive Summary</h2>
+        <div class="results-container">
+            <div class="matrix-wrapper">
+                <div class="matrix-title">Diligence Positioning Matrix</div>
+                <div class="scatter-plot">
+                    <div class="quadrant quad-ready"></div>
+                    <div class="quadrant quad-gap"></div>
+                    <div class="quadrant quad-emerge"></div>
+                    <div class="quadrant quad-risk"></div>
+                    <div class="grid-line-h line-40"></div>
+                    <div class="grid-line-h line-70"></div>
+                    <div class="grid-line-v vline-40"></div>
+                    <div class="grid-line-v vline-70"></div>
+                    <div class="axis-tick tick-x-40">40</div>
+                    <div class="axis-tick tick-x-70">70</div>
+                    <div class="axis-tick tick-y-40">40</div>
+                    <div class="axis-tick tick-y-70">70</div>
+                    <div class="axis-label x-axis-label">Capability Score</div>
+                    <div class="axis-label y-axis-label">Assurance Score</div>
+                    <div class="quad-label label-ready">Institutionally<br>Ready</div>
+                    <div class="quad-label label-gap">Assurance<br>Gap</div>
+                    <div class="quad-label label-emerge">Emerging<br>Governance</div>
+                    <div class="quad-label label-risk">Insufficient<br>Governance</div>
+                    <div class="matrix-dot" id="matrix-dot"></div>
+                </div>
+                <div class="print-matrix-summary" id="print-matrix-summary">Matrix Position: Assessment Incomplete</div>
+            </div>
+            <div class="narrative-wrapper">
+                <div class="input-group">
+                    <label for="confidence-statement">Institutional Confidence Statement</label>
+                    <textarea id="confidence-statement" style="min-height: 160px;" placeholder="The narrative assessment will generate here based on the matrix positioning..." readonly></textarea>
+                </div>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label for="priority-gaps">Top Priority Gaps & Diagnostics</label>
+                    <textarea id="priority-gaps" style="min-height: 100px;" placeholder="Priority gaps will populate here..." readonly></textarea>
+                </div>
+                <div class="reliance-box" id="reliance-box" style="display: none;">
+                    <div class="reliance-verdict" id="reliance-verdict"></div>
+                    <div class="reliance-rationale" id="reliance-rationale"></div>
+                </div>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="reassessment-triggers">Re-Assessment Triggers</label>
+            <textarea id="reassessment-triggers" style="min-height: 80px;" placeholder="Auto-generated time-bound triggers will appear here..." readonly></textarea>
+        </div>
+        <div class="input-group">
+            <label for="next-actions">Recommended Next Actions</label>
+            <textarea id="next-actions" placeholder="1. &#10;2. &#10;3. " oninput="debouncedSave()" style="min-height: 100px;"></textarea>
+        </div>
+    </div>
+            <!-- Counterparty Trust Gates -->
+        <div class="glass-panel" style="animation-delay: 0.7s">
+            <h3 style="margin-top: 0; margin-bottom: 5px;">Counterparty Trust Gates</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0;">How external parties view this workflow based on current assurance levels.</p>
+            <div class="trust-gates" id="trust-gates">
+                <div class="trust-gate"><div class="gate-name">Payment Processor</div><div class="gate-status status-gap" id="gate-payment">PENDING</div></div>
+                <div class="trust-gate"><div class="gate-name">Investor Diligence</div><div class="gate-status status-gap" id="gate-investor">PENDING</div></div>
+                <div class="trust-gate"><div class="gate-name">Insurer Review</div><div class="gate-status status-gap" id="gate-insurer">PENDING</div></div>
+                <div class="trust-gate"><div class="gate-name">Enterprise Client</div><div class="gate-status status-gap" id="gate-client">PENDING</div></div>
+                <div class="trust-gate"><div class="gate-name">Regulator</div><div class="gate-status status-gap" id="gate-regulator">PENDING</div></div>
+            </div>
+            
+                        <div class="cta-lockbox">
+                <div class="cta-headline" id="cta-headline">Your workflow is not yet reliance-ready.</div>
+                <div class="cta-sub" id="cta-sub">You have blockers that could affect processor approval, enterprise procurement, insurance review, or investor diligence.</div>
+                
+                <div class="cta-tiers">
+                    <div class="cta-tier">
+                        <div class="tier-title">Unlock Full Trust Readiness Report</div>
+                        <div class="tier-price">$99</div>
+                        <ul class="tier-list">
+                            <li>Counterparty-facing risk summary</li>
+                            <li>Evidence checklist</li>
+                            <li>Priority remediation plan</li>
+                            <li>Exportable PDF</li>
+                            <li>Review notes for payment processors, investors, insurers, clients, and regulators</li>
+                        </ul>
+                        <button class="cta-btn" onclick="alert('Checkout integration pending')">Unlock Full Report</button>
+                    </div>
+                    <div class="cta-tier">
+                        <div class="tier-title">Expert Trust Review</div>
+                        <div class="tier-price">$499+</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Need this reviewed before sending it to a bank, processor, investor, insurer, or client?</div>
+                        <ul class="tier-list">
+                            <li>Everything in the Readiness Report</li>
+                            <li>60-minute architecture review session</li>
+                            <li>Custom remediation architecture</li>
+                            <li>Direct answers to counterparty DDQs</li>
+                        </ul>
+                        <button class="cta-btn cta-btn-outline" onclick="alert('Scheduling integration pending')">Request Expert Review</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sticky-summary">
+        <div class="score-display">
+            <div class="meter-group">
+                <span class="meter-label">Capability</span>
+                <span class="meter-value cap-val" id="cap-score">--%</span>
+            </div>
+            <div class="meter-group">
+                <span class="meter-label">Assurance</span>
+                <span class="meter-value assur-val" id="assur-score">--%</span>
+            </div>
+            <div class="posture">
+                <span class="posture-label">Institutional Confidence</span>
+                <span class="posture-value" id="posture-text">Incomplete</span>
+                <span class="floor-rule-warning" id="floor-warning"></span>
+            </div>
+        </div>
+        <div class="button-group">
+            <button type="button" class="btn btn-outline" onclick="resetAll()">Reset</button>
+            <button type="button" class="btn btn-outline" onclick="exportJSON()">Download JSON</button>
+            <button type="button" class="btn" id="btn-send-assurance" onclick="sendToAssurance()" title="Send this diagnostic to the Assurance MVP intake adapter">Send to Assurance →</button>
+            <button type="button" class="btn" onclick="window.print()">Export PDF</button>
+        </div>
+        <div id="assurance-status" style="display:none; margin-top:8px; padding:8px 12px; border-radius:6px; font-size:0.85rem;"></div>
+    </div>
+    <div class="sr-only" aria-live="polite" aria-atomic="true" id="aria-live-region"></div>
+</div>
+<script>
+
+window.metaRisk = 'Operational';
+function togglePill(el) { el.classList.toggle('active'); onMetaChange(); }
+function selectSinglePill(el, parentId) {
+    const parent = document.getElementById(parentId);
+    parent.querySelectorAll('.pill-toggle').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+}
+
+
+const DIMENSIONS = [
+    {
+        id: 1, title: "Reversibility Classification", weight: 3,
+        question: "Should this action even be automated? (Does the system systematically know when an action is irreversible?)",
+        regulatoryTags: ["NIST: Map", "ISO 42001 A.6", "EU AI Act Art.9"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "No action classification. AI executes blindly without reversibility assessment." },
+            { val: 1, title: "1 — Minimal", desc: "Ad hoc flags. Manual taxonomy only, no systematic enforcement." },
+            { val: 2, title: "2 — Partial", desc: "Systematic classification applied. Gating is advisory, not enforced." },
+            { val: 3, title: "3 — Complete", desc: "Total classification with enforced gating and documented rollback paths." }
+        ]
+    },
+    {
+        id: 2, title: "Audit Provenance", weight: 4,
+        question: "Does the operation maintain a tamper-evident record of AI state transitions and governance events?",
+        regulatoryTags: ["NIST: Measure", "ISO 42001 Cl.9", "EU AI Act Art.12"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "No audit trail. AI actions logged informally or not at all." },
+            { val: 1, title: "1 — Minimal", desc: "Basic timestamped logs. Not tamper-evident (mutable by admins)." },
+            { val: 2, title: "2 — Partial", desc: "Hash-chained audit trail. Append-only, single-platform scope." },
+            { val: 3, title: "3 — Complete", desc: "Cryptographically signed, cross-platform trail with Merkle verification." }
+        ]
+    },
+    {
+        id: 3, title: "Human Override Capability", weight: 4,
+        counterpartyQuestion: "Can a human intercept and stop irreversible actions before they cause damage?", whyItMatters: "Insurers and enterprise clients view un-interceptable actions as unmitigated liability. If it can't be stopped, it can't be insured.",
+        regulatoryTags: ["NIST: Manage", "ISO 42001 A.3.2", "EU AI Act Art.14"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "Complete autonomy. No intervention path exists at any stage." },
+            { val: 1, title: "1 — Minimal", desc: "All-or-nothing kill switch exists but is not integrated into workflows." },
+            { val: 2, title: "2 — Partial", desc: "Graduated override at multiple decision gates. Interventions are logged." },
+            { val: 3, title: "3 — Complete", desc: "Mandatory human auth at irreversibility boundary (Topology Guard)." }
+        ]
+    },
+    {
+        id: 4, title: "Behavioral Verification", weight: 2,
+        question: "Does the operation verify its agents behave as specified, rather than merely claiming they do?",
+        regulatoryTags: ["NIST: Measure", "ISO 42001 A.5", "EU AI Act Art.11"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "No verification. Behavior is assumed to match specification." },
+            { val: 1, title: "1 — Minimal", desc: "Inconsistent manual spot-checking of outputs." },
+            { val: 2, title: "2 — Partial", desc: "Automated discrepancy detection between policy claims and observed behavior." },
+            { val: 3, title: "3 — Complete", desc: "Formal verification. System invariants are proved continuously or at deployment." }
+        ]
+    },
+    {
+        id: 5, title: "Delegation Boundaries", weight: 2,
+        question: "Are the functional boundaries of what AI agents can do explicitly defined, enforced, and documented?",
+        regulatoryTags: ["NIST: Govern", "ISO 42001 A.2", "EU AI Act Art.9"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "No boundaries. Agents operate with unconstrained scope." },
+            { val: 1, title: "1 — Minimal", desc: "Implicit boundaries limited only by available tools or API surface." },
+            { val: 2, title: "2 — Partial", desc: "Explicit context contracts enforced at the routing or orchestration layer." },
+            { val: 3, title: "3 — Complete", desc: "Dynamic delegation with asymmetric gating based on evidential standards per action." }
+        ]
+    },
+    {
+        id: 6, title: "Counterparty Risk Profile", weight: 2,
+        question: "Has the operation assessed how institutional counterparties (banks, insurers, investors) evaluate its risk?",
+        regulatoryTags: ["Institutional DD"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "No assessment. External institutional evaluation is ignored entirely." },
+            { val: 1, title: "1 — Minimal", desc: "Verbal awareness of scrutiny but no documented modeling or criteria mapping." },
+            { val: 2, title: "2 — Partial", desc: "Self-assessment documented against known counterparty criteria (e.g., SOC 2, investor checklists)." },
+            { val: 3, title: "3 — Complete", desc: "Third-party validated risk profile with documented likely institutional acceptance pathways." }
+        ]
+    },
+    {
+        id: 7, title: "Institutional Legibility", weight: 2,
+        question: "Can an external counterparty read and understand the operation without insider engineering knowledge?",
+        regulatoryTags: ["NIST: Govern", "ISO 42001 A.7.5", "EU AI Act Art.13"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "Opaque infrastructure. Unintelligible to anyone without deep system access." },
+            { val: 1, title: "1 — Minimal", desc: "Technically legible. Requires deep engineering knowledge to interpret." },
+            { val: 2, title: "2 — Partial", desc: "Professionally legible (risk registers, logs). Not tailored to specific audiences." },
+            { val: 3, title: "3 — Complete", desc: "Counterparty-specific formats (regulatory bundles, legal summaries, investor tear-sheets)." }
+        ]
+    },
+    {
+        id: 8, title: "Model Provenance & Supply Chain", weight: 2,
+        question: "Are the governance posture, training conditions, and data boundaries of underlying models verifiable?",
+        regulatoryTags: ["NIST: Map", "ISO 42001 A.6/A.7", "EU AI Act Art.10"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "Undisclosed or unverifiable models. No governance claims can be independently validated." },
+            { val: 1, title: "1 — Minimal", desc: "Known model family with published safety card, but no contractual data boundaries or SLAs." },
+            { val: 2, title: "2 — Partial", desc: "Enterprise agreements with zero-retention DPAs and audit rights. Verifiable data isolation." },
+            { val: 3, title: "3 — Complete", desc: "Cryptographic attestation of training data provenance + independent model audit or self-hosted with verifiable lineage." }
+        ]
+    },
+    {
+        id: 9, title: "Incident Response", weight: 3,
+        question: "Does the operation have a specific, restorative protocol for when AI behavior fails or drifts?",
+        regulatoryTags: ["NIST: Manage", "ISO 42001 A.6.2.6", "EU AI Act Art.9/17"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "No incident protocol exists for AI-specific failures or behavioral drift." },
+            { val: 1, title: "1 — Minimal", desc: "Ad-hoc response, relying on standard IT downtime procedures. No AI-specific playbooks." },
+            { val: 2, title: "2 — Partial", desc: "Dedicated AI incident response plan with playbooks for drift, jailbreaks, and prompt injection." },
+            { val: 3, title: "3 — Complete", desc: "Automated containment paired with rehearsed, SLA-bound human restoration and post-incident verification." }
+        ]
+    },
+    {
+        id: 10, title: "Containment & Blast Radius", weight: 4,
+        question: "If nobody stops it... what happens? (What is the architectural limit on rogue damage?)",
+        regulatoryTags: ["NIST: Manage", "ISO 42001 A.3.2/A.7.4", "EU AI Act Art.9"],
+        capOptions: [
+            { val: 0, title: "0 — Absent", desc: "Global access. Unmetered spend. No architectural limits on agent scope or damage." },
+            { val: 1, title: "1 — Minimal", desc: "Basic permissions exist, but blast radius remains large (e.g., broad API keys, shared credentials)." },
+            { val: 2, title: "2 — Partial", desc: "Least privilege enforced with hard-capped budgets and scoped credentials per agent." },
+            { val: 3, title: "3 — Complete", desc: "Zero-trust compartmentalization. Ephemeral sandboxes, network segmentation, and automatic budget exhaustion killswitches." }
+        ]
+    }
+];
+
+const EVIDENCE_OPTIONS = [
+    { val: 0, title: "0 — No Evidence", desc: "Verbal claim or untested assumption. Zero independent assurance." },
+    { val: 1, title: "1 — Statement/Doc", desc: "Policies, architecture diagrams, or stated intentions in markdown/docs." },
+    { val: 2, title: "2 — Internal Logs", desc: "System telemetry, execution logs, or internal test results reviewed." },
+    { val: 3, title: "3 — Auto Verification", desc: "CI/CD testing suites, continuous monitoring, or automated proof pipelines." },
+    { val: 4, title: "4 — External Proof", desc: "Cryptographic attestation, independent 3rd party audit, or certification body sign-off." }
+];
+
+const TOTAL_DIMENSIONS = DIMENSIONS.length;
+let TOTAL_WEIGHT = 0;
+DIMENSIONS.forEach(d => TOTAL_WEIGHT += d.weight);
+const MAX_CAP_SCORE = TOTAL_WEIGHT * 3;
+const MAX_ASSUR_SCORE = TOTAL_WEIGHT * 4;
+const STORAGE_KEY = 'governability_diagnostic_v61_state';
+let saveTimeout = null;
+let isRestoring = false;
+
+function renderDimensions() {
+    const form = document.getElementById('diagnostic-form');
+    let html = '';
+    DIMENSIONS.forEach((d, idx) => {
+        const tagsHtml = d.regulatoryTags ? '<div class="dim-tags">' + d.regulatoryTags.join(' | ') + '</div>' : '';
+        html += '<div class="glass-panel dimension" data-dim="' + d.id + '" style="animation-delay: ' + (0.15 + idx * 0.08) + 's">' +
+            '<div class="dimension-header">' +
+                '<h2 class="dimension-title">D' + d.id + ': ' + d.title +
+                    '<span class="dim-weight">Weight: ' + d.weight + '.0x</span>' + tagsHtml +
+                '</h2>' +
+                '<div class="header-actions">' +
+                    '<button type="button" class="action-btn" onclick="setNA(' + d.id + ')" id="btn-na-' + d.id + '">Insufficient Info</button>' +
+                    '<button type="button" class="action-btn" onclick="clearScore(' + d.id + ')">Clear</button>' +
+                '</div>' +
+            '</div>' +
+                        '<div class="dim-counterparty">' +
+                '<div class="dim-counterparty-title">Counterparty Question</div>' +
+                '<div class="dim-counterparty-question">"' + d.counterpartyQuestion + '"</div>' +
+            '</div>' +
+            '<div class="dim-why">' +
+                '<div class="dim-why-title">Why this matters</div>' +
+                '<div class="dim-why-text">' + d.whyItMatters + '</div>' +
+            '</div>' +
+            '<div class="sub-axis-title cap-title">▶ Capability (What controls exist?)</div>' +
+            '<div class="scoring-grid cap-grid" role="radiogroup" id="cap-group-' + d.id + '" aria-label="Capability scoring for ' + d.title + '">';
+        d.capOptions.forEach(opt => {
+            html += '<button type="button" class="score-option cap-option" ' +
+                'onclick="selectSubScore(' + d.id + ', \'cap\', ' + opt.val + ')" ' +
+                'onkeydown="handleKeyNav(event, ' + d.id + ', \'cap\', ' + opt.val + ')" ' +
+                'data-val="' + opt.val + '" role="radio" aria-checked="false" tabindex="0">' +
+                '<span class="score-value">' + opt.title + '</span>' +
+                '<span class="score-desc">' + opt.desc + '</span>' +
+            '</button>';
+        });
+        html += '</div>' +
+            '<div class="sub-axis-title evid-title">▶ Assurance (How is it substantiated?)</div>' +
+            '<div class="scoring-grid evid-grid" role="radiogroup" id="evid-group-' + d.id + '" aria-label="Assurance scoring for ' + d.title + '">';
+        EVIDENCE_OPTIONS.forEach(opt => {
+            html += '<button type="button" class="score-option evid-option" ' +
+                'onclick="selectSubScore(' + d.id + ', \'evid\', ' + opt.val + ')" ' +
+                'onkeydown="handleKeyNav(event, ' + d.id + ', \'evid\', ' + opt.val + ')" ' +
+                'data-val="' + opt.val + '" role="radio" aria-checked="false" tabindex="0">' +
+                '<span class="score-value">' + opt.title + '</span>' +
+                '<span class="score-desc">' + opt.desc + '</span>' +
+            '</button>';
+        });
+        html += '</div>' +
+            '<input type="hidden" id="dim' + d.id + '-cap" value="-1">' +
+            '<input type="hidden" id="dim' + d.id + '-evid" value="-1">' +
+            '<input type="hidden" id="dim' + d.id + '-na" value="false">' +
+            '<div class="input-group" style="margin-top: 25px;">' +
+                '<label for="dim' + d.id + '-notes">Auditor Notes & Findings</label>' +
+                '<textarea id="dim' + d.id + '-notes" placeholder="Document specific artifacts reviewed here..." oninput="debouncedSave()"></textarea>' +
+            '</div>' +
+        '</div>';
+    });
+    form.innerHTML = html;
+}
+
+function handleKeyNav(e, dim, axis, currentVal) {
+    const options = Array.from(document.querySelectorAll('#' + axis + '-group-' + dim + ' .score-option'));
+    const currentIndex = options.findIndex(o => parseInt(o.getAttribute('data-val')) === currentVal);
+    let newIndex = currentIndex;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        newIndex = Math.min(currentIndex + 1, options.length - 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        newIndex = Math.max(currentIndex - 1, 0);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectSubScore(dim, axis, currentVal);
+        return;
+    } else {
+        return;
+    }
+    e.preventDefault();
+    options[newIndex].focus();
+}
+
+function selectSubScore(dim, axis, val) {
+    if (isRestoring) return;
+    document.getElementById('dim' + dim + '-na').value = "false";
+    document.getElementById('btn-na-' + dim).classList.remove('na-selected');
+    document.getElementById('dim' + dim + '-' + axis).value = val;
+    const options = document.querySelectorAll('#' + axis + '-group-' + dim + ' .score-option');
+    options.forEach(opt => {
+        const optVal = parseInt(opt.getAttribute('data-val'));
+        if (optVal === val) {
+            opt.classList.add('selected');
+            opt.setAttribute('aria-checked', 'true');
+        } else {
+            opt.classList.remove('selected');
+            opt.setAttribute('aria-checked', 'false');
+        }
+    });
+    calculateTotal();
+    debouncedSave();
+}
+
+function setNA(dim) {
+    if (isRestoring) return;
+    document.getElementById('dim' + dim + '-na').value = "true";
+    document.getElementById('dim' + dim + '-cap').value = -1;
+    document.getElementById('dim' + dim + '-evid').value = -1;
+    document.querySelectorAll('.dimension[data-dim="' + dim + '"] .score-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.setAttribute('aria-checked', 'false');
+    });
+    document.getElementById('btn-na-' + dim).classList.add('na-selected');
+    calculateTotal();
+    debouncedSave();
+}
+
+function clearScore(dim) {
+    if (isRestoring) return;
+    document.getElementById('dim' + dim + '-na').value = "false";
+    document.getElementById('dim' + dim + '-cap').value = -1;
+    document.getElementById('dim' + dim + '-evid').value = -1;
+    document.querySelectorAll('.dimension[data-dim="' + dim + '"] .score-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.setAttribute('aria-checked', 'false');
+    });
+    document.getElementById('btn-na-' + dim).classList.remove('na-selected');
+    calculateTotal();
+    debouncedSave();
+}
+
+function resetAll() {
+    if (!confirm("Are you sure you want to reset the entire assessment? All data will be lost.")) return;
+    for (let i = 1; i <= TOTAL_DIMENSIONS; i++) {
+        clearScore(i);
+        const noteEl = document.getElementById('dim' + i + '-notes');
+        if (noteEl) noteEl.value = '';
+    }
+    document.querySelectorAll('input[type="text"]').forEach(i => i.value = '');
+    document.getElementById('meta-audience').value = 'general';
+    document.getElementById('meta-criticality').value = 'operational';
+    document.getElementById('meta-confidence').value = 'high';
+    document.getElementById('meta-date').valueAsDate = new Date();
+    updateValidUntil();
+    document.getElementById('next-actions').value = '';
+    localStorage.removeItem(STORAGE_KEY);
+    calculateTotal();
+}
+
+const dateInput = document.getElementById('meta-date');
+const validUntilInput = document.getElementById('meta-valid');
+function updateValidUntil() {
+    const d = dateInput.valueAsDate;
+    if (d) {
+        const valid = new Date(d);
+        valid.setDate(valid.getDate() + 90);
+        validUntilInput.valueAsDate = valid;
+    }
+}
+
+function onMetaChange() {
+    if (isRestoring) return;
+    calculateTotal();
+    debouncedSave();
+    checkStale();
+}
+
+function checkStale() {
+    const validStr = document.getElementById('meta-valid').value;
+    const warning = document.getElementById('stale-warning');
+    if (!validStr) { warning.classList.remove('visible'); return; }
+    const validDate = new Date(validStr);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (validDate < today) {
+        warning.classList.add('visible');
+    } else {
+        warning.classList.remove('visible');
+    }
+}
+
+function getZone(score) {
+    if (score >= 70) return "high";
+    if (score >= 40) return "transitional";
+    return "low";
+}
+
+function calculateTotal() {
+    let capTotal = 0;
+    let assurTotal = 0;
+    let answered = 0;
+    let data = {};
+    let naCount = 0;
+    let hasAnyZeroCap = false;
+    let hasAnyZeroEvid = false;
+
+    const criticality = document.getElementById('meta-criticality').value;
+    const isHighRisk = (criticality === 'financial' || criticality === 'regulated' || criticality === 'safety');
+    const assessmentConfidence = document.getElementById('meta-confidence').value;
+
+    DIMENSIONS.forEach(d => {
+        const isNA = document.getElementById('dim' + d.id + '-na').value === "true";
+        const capVal = parseInt(document.getElementById('dim' + d.id + '-cap').value);
+        const evidVal = parseInt(document.getElementById('dim' + d.id + '-evid').value);
+        data[d.id] = { cap: capVal, evid: evidVal, na: isNA, weight: d.weight };
+        if (isNA) {
+            answered++;
+            naCount++;
+        } else if (capVal !== -1 && evidVal !== -1) {
+            answered++;
+            capTotal += (capVal * d.weight);
+            assurTotal += (evidVal * d.weight);
+            if (capVal === 0) hasAnyZeroCap = true;
+            if (evidVal === 0) hasAnyZeroEvid = true;
+        }
+    });
+
+    const capEl = document.getElementById('cap-score');
+    const assurEl = document.getElementById('assur-score');
+    const postureEl = document.getElementById('posture-text');
+    const warningEl = document.getElementById('floor-warning');
+    const matrixDot = document.getElementById('matrix-dot');
+    const printSummary = document.getElementById('print-matrix-summary');
+    const relianceBox = document.getElementById('reliance-box');
+
+    if (answered < TOTAL_DIMENSIONS) {
+        capEl.innerText = '--%';
+        assurEl.innerText = '--%';
+        postureEl.innerText = "Incomplete";
+        postureEl.className = "posture-value";
+        warningEl.style.display = 'none';
+        document.getElementById('confidence-statement').value = "";
+        document.getElementById('priority-gaps').value = "";
+        document.getElementById('reassessment-triggers').value = "";
+        matrixDot.style.display = 'none';
+        printSummary.innerText = "Matrix Position: Assessment Incomplete";
+        relianceBox.style.display = 'none';
+        return;
+    }
+
+    const capPercent = Math.round((capTotal / MAX_CAP_SCORE) * 100);
+    const assurPercent = Math.round((assurTotal / MAX_ASSUR_SCORE) * 100);
+
+    capEl.innerText = capPercent + '%';
+    assurEl.innerText = assurPercent + '%';
+
+    matrixDot.style.display = 'block';
+    matrixDot.style.left = capPercent + '%';
+    matrixDot.style.bottom = assurPercent + '%';
+    printSummary.innerText = 'Matrix Position: Capability ' + capPercent + '%, Assurance ' + assurPercent + '%';
+
+    const capZone = getZone(capPercent);
+    const assurZone = getZone(assurPercent);
+
+    let headline = "";
+    let postureClass = "";
+    let dotClass = "";
+
+    if (capZone === "high" && assurZone === "high") {
+        headline = "High Confidence";
+        postureClass = "posture-ready";
+        dotClass = "ready";
+    } else if (capZone === "low" && assurZone === "low") {
+        headline = "Low Confidence";
+        postureClass = "posture-risk";
+        dotClass = "risk";
+    } else {
+        headline = "Conditional Confidence";
+        if (capZone === "high" && assurZone === "low") { postureClass = "posture-gap"; dotClass = "gap"; }
+        else if (capZone === "low" && assurZone === "high") { postureClass = "posture-emerge"; dotClass = "emerge"; }
+        else { postureClass = "posture-trans"; dotClass = "trans"; }
+    }
+
+    warningEl.style.display = 'none';
+    let floorRules = [];
+
+    // OPACITY PENALTY
+    if (naCount > 2) {
+        headline = "Unverifiable (Opaque)";
+        postureClass = "posture-unverifiable";
+        dotClass = "unverifiable";
+        warningEl.innerText = "Opacity Penalty: " + naCount + " dimensions marked insufficient information. Institutional reliance not recommended.";
+        warningEl.style.display = 'block';
+        floorRules.push("Opacity Penalty (>2 N/A dimensions)");
+    }
+    // D3 FLOOR RULE
+    else if (!data[3].na && data[3].cap === 0) {
+        headline = "Ungoverned (No Override)";
+        postureClass = "posture-risk";
+        dotClass = "risk";
+        warningEl.innerText = "D3 Floor Rule: No verifiable human override path.";
+        warningEl.style.display = 'block';
+        floorRules.push("D3 Floor Rule (No human override)");
+    }
+    // D10 FLOOR RULE
+    else if (!data[10].na && data[10].cap === 0) {
+        headline = "Ungoverned (No Containment)";
+        postureClass = "posture-risk";
+        dotClass = "risk";
+        warningEl.innerText = "D10 Floor Rule: No architectural containment or blast radius limits.";
+        warningEl.style.display = 'block';
+        floorRules.push("D10 Floor Rule (No containment)");
+    }
+    // D2 BACKSTOP WARNING (soft floor - doesn't override headline but generates gap)
+    else if (!data[2].na && data[2].evid === 0) {
+        warningEl.innerText = "D2 Backstop: Audit Provenance has zero assurance. All other assurance claims rely on self-attestation.";
+        warningEl.style.display = 'block';
+        floorRules.push("D2 Backstop (Zero audit assurance)");
+    }
+
+    postureEl.innerText = headline;
+    postureEl.className = "posture-value " + postureClass;
+    matrixDot.className = "matrix-dot " + dotClass;
+
+    generateNarrativeAndGaps(data, capPercent, capZone, assurPercent, assurZone, isHighRisk, assessmentConfidence, floorRules, naCount);
+}
+
+function generateNarrativeAndGaps(data, capPct, capZone, assurPct, assurZone, isHighRisk, assessorConf, floorRules, naCount) {
+    let gaps = [];
+    let statement = "";
+
+    // ARCHETYPE NARRATIVE
+    let archetypeStr = "";
+    if (capZone === "high" && assurZone === "high") {
+        archetypeStr = "The operation demonstrates sophisticated governance mechanisms (Capability: " + capPct + "%) supported by independently verifiable artifacts (Assurance: " + assurPct + "%). This aligns with the 'Institutionally Ready' archetype.";
+    } else if (capZone === "high" && assurZone === "low") {
+        archetypeStr = "The operation claims sophisticated governance architecture (Capability: " + capPct + "%), however, institutional assurance remains weak (Assurance: " + assurPct + "%). These controls are supported primarily by internal documentation rather than independently verifiable evidence. This represents a significant 'Assurance Gap' that will impede counterparty acceptance.";
+    } else if (capZone === "low" && assurZone === "high") {
+        archetypeStr = "The operation currently demonstrates limited governance sophistication (Capability: " + capPct + "%). Nevertheless, claims are consistently supported by available evidence (Assurance: " + assurPct + "%), indicating a highly transparent representation of present capabilities. Institutional stakeholders may view this as 'Emerging Governance' (honest immaturity) rather than deceptive posture.";
+    } else if (capZone === "low" && assurZone === "low") {
+        archetypeStr = "Neither operational governance capability (" + capPct + "%) nor institutional assurance (" + assurPct + "%)) meets minimum expectations. This indicates an 'Insufficient Governance' posture posing a high risk to institutional reliance.";
+    } else {
+        archetypeStr = "The operation sits in a 'Transitional' zone (Capability: " + capPct + "%, Assurance: " + assurPct + "%). Controls and verification mechanisms are partially established but not yet mature enough for unconditional reliance.";
+    }
+
+    // BOUNDARY PROXIMITY
+    let boundaryNote = "";
+    if (capZone === "high" && capPct < 75) boundaryNote += " Note: Operational capability is extremely close to the minimum acceptance boundary (70%).";
+    if (assurZone === "high" && assurPct < 75) boundaryNote += " Note: Institutional assurance is extremely close to the minimum acceptance boundary (70%).";
+
+    // CRITICALITY SHIFT
+    let critNote = "";
+    if (isHighRisk) {
+        if (capPct < 80 || assurPct < 80) {
+            critNote = "\n\nCRITICALITY ADJUSTMENT: Because this operation is classified as Financial/Regulated/Safety-Critical, these scores may be insufficient for unconditional deployment. Such systems typically require minimum scores of 80%+ across both axes for institutional acceptance.";
+        } else {
+            critNote = "\n\nCRITICALITY ADJUSTMENT: The system meets the elevated rigor required for Financial/Regulated/Safety-Critical operations.";
+        }
+    }
+
+    // ASSESSOR CONFIDENCE DISCLAIMER
+    let disclaimerNote = "";
+    if (assessorConf === "low") {
+        disclaimerNote = "\n\nASSESSMENT CONFIDENCE WARNING: This audit was performed with limited access (public documentation / black-box only). The assurance scores reflect what is publicly verifiable, not necessarily what exists internally. True institutional reliance requires full telemetry access.";
+    } else if (assessorConf === "medium") {
+        disclaimerNote = "\n\nASSESSMENT CONFIDENCE NOTE: This audit was performed with partial access. Some artifacts could not be fully verified in production environments.";
+    }
+
+    // OPACITY NOTE
+    let opacityNote = "";
+    if (naCount > 0) {
+        opacityNote = "\n\nOPACITY NOTE: " + naCount + " dimension(s) were marked 'Insufficient Info.' In institutional due diligence, inability to provide evidence is itself a finding.";
+    }
+
+    statement = archetypeStr + boundaryNote + critNote + disclaimerNote + opacityNote;
+    document.getElementById('confidence-statement').value = statement;
+
+    // GAP DETECTION
+    // Disagreement detection
+    DIMENSIONS.forEach(d => {
+        const dData = data[d.id];
+        if (!dData.na) {
+            if (dData.cap - dData.evid >= 2) {
+                gaps.push("[P0] Assurance Gap (D" + d.id + "): Operational sophistication is claimed (Level " + dData.cap + ") but lacks commensurate evidence (Level " + dData.evid + "). Third-party reliance impossible without verification.");
+            }
+            if (dData.evid - dData.cap >= 2) {
+                gaps.push("[P2] Imbalanced Diligence (D" + d.id + "): High assurance (Level " + dData.evid + ") applied to immature controls (Level " + dData.cap + "). Verify that evidence artifacts are not auditing the wrong maturity level.");
+            }
+        }
+    });
+
+    // D2 BACKSTOP
+    if (!data[2].na && data[2].evid === 0) {
+        gaps.push("[P0] D2 Backstop: Audit Provenance has zero assurance. Without tamper-evident records, all other assurance claims across the operation rely on self-attestation and cannot be independently verified.");
+    }
+
+    // TIER 1 RISKS
+    if (!data[2].na && data[2].evid < 2) gaps.push("[P0] Audit Deficit: Without tamper-evident logs (D2), all other systemic guarantees are technically unverifiable.");
+    if (!data[3].na && data[3].cap < 2) gaps.push("[P0] Uncontained Autonomy: The system lacks graduated human override at irreversibility boundaries (D3).");
+    if (!data[10].na && data[10].cap < 2) gaps.push("[P0] Blast Radius Exposure: Agents operate without sufficient compartmentalization or hard limits (D10).");
+
+    // HIGH RISK PROFILES
+    if (isHighRisk) {
+        if (!data[1].na && data[1].cap < 3) gaps.push("[P1] Reversibility Failure: High-risk operations require strict, systematic irreversibility gating (D1).");
+        if (!data[9].na && data[9].cap < 2) gaps.push("[P1] Restorative Failure: High-risk operations require dedicated AI incident playbooks (D9).");
+    }
+
+    const gapsTextarea = document.getElementById('priority-gaps');
+    if (gaps.length > 0) {
+        let formattedText = "";
+        gaps.forEach((g, i) => { formattedText += (i+1) + ". " + g + "\n\n"; });
+        gapsTextarea.value = formattedText.trim();
+    } else {
+        gapsTextarea.value = "No critical priority gaps detected. Matrix positioning supports the current architecture.";
+    }
+
+    // RELIANCE RECOMMENDATION ENGINE
+    let relianceVerdict = "";
+    let relianceRationale = "";
+    let relianceClass = "";
+
+    const hasFloorRule = floorRules.length > 0;
+    const hasCriticalGaps = gaps.some(g => g.startsWith("[P0]"));
+
+    if (hasFloorRule || hasCriticalGaps) {
+        relianceVerdict = "NO RELIANCE";
+        relianceClass = "reliance-none";
+        if (floorRules.length > 0) {
+            relianceRationale = "Institutional reliance is NOT recommended. Triggered floor rules: " + floorRules.join("; ") + ". These represent non-negotiable prerequisites for counterparty acceptance.";
+        } else {
+            relianceRationale = "Institutional reliance is NOT recommended. Critical priority gaps (P0) indicate fundamental safety or verifiability failures that must be remediated before any counterparty engagement.";
+        }
+    } else if (capZone === "high" && assurZone === "high" && !isHighRisk) {
+        relianceVerdict = "UNCONDITIONAL RELIANCE";
+        relianceClass = "reliance-unconditional";
+        relianceRationale = "Assessment supports immediate institutional reliance. Both capability and assurance exceed thresholds with no critical gaps detected.";
+    } else if (capZone === "high" && assurZone === "high" && isHighRisk) {
+        relianceVerdict = "CONDITIONAL RELIANCE";
+        relianceClass = "reliance-conditional";
+        relianceRationale = "Assessment supports institutional reliance subject to ongoing monitoring. While scores meet general readiness thresholds, the high-risk classification warrants continuous verification and periodic re-assessment.";
+    } else {
+        relianceVerdict = "CONDITIONAL RELIANCE";
+        relianceClass = "reliance-conditional";
+        if (capZone === "high" && assurZone === "low") {
+            relianceRationale = "Reliance permitted only after assurance gaps are closed. The operation has mature controls but lacks independent verification. Counterparties should require external audit or automated proof pipelines before deployment.";
+        } else if (capZone === "low" && assurZone === "high") {
+            relianceRationale = "Reliance permitted with governance milestones. The operation is transparent about its immaturity. Counterparties should structure conditional acceptance with capability improvement targets (e.g., D" + findLowestCapDimension(data) + " remediation).";
+        } else {
+            relianceRationale = "Reliance permitted subject to significant remediation. Both capability and assurance require material improvement before institutional counterparties should accept risk.";
+        }
+    }
+
+    const relianceBox = document.getElementById('reliance-box');
+    const relianceVerdictEl = document.getElementById('reliance-verdict');
+    const relianceRationaleEl = document.getElementById('reliance-rationale');
+    relianceBox.style.display = 'block';
+    relianceVerdictEl.innerText = relianceVerdict;
+    relianceVerdictEl.className = "reliance-verdict " + relianceClass;
+    relianceRationaleEl.innerText = relianceRationale;
+
+    // RE-ASSESSMENT TRIGGERS
+    let triggers = [];
+    if (!data[8].na && data[8].cap < 3) triggers.push("Model version change or vendor update (D8 is not at complete provenance).");
+    if (!data[4].na && data[4].cap < 3) triggers.push("New agent behavior or deployment pattern (D4 behavioral verification is not formal).");
+    if (!data[1].na && data[1].cap < 3) triggers.push("Introduction of new irreversible action types (D1 reversibility classification is not complete).");
+    if (!data[6].na && data[6].cap < 3) triggers.push("Engagement with new counterparty category (bank, insurer, regulator) (D6 risk profile is not validated).");
+    if (!data[2].na && data[2].cap >= 2) triggers.push("Audit trail infrastructure rotation or key expiry (D2 audit provenance).");
+    if (isHighRisk) triggers.push("Any incident, near-miss, or drift detection event (high-risk classification).");
+
+    if (triggers.length === 0) {
+        triggers.push("Standard 90-day expiration (no extraordinary volatility detected).");
+    }
+
+    let triggerText = "Re-assess within 90 days, or immediately if any of the following occur:\n";
+    triggers.forEach((t, i) => { triggerText += (i+1) + ". " + t + "\n"; });
+    document.getElementById('reassessment-triggers').value = triggerText.trim();
+
+    // ARIA LIVE UPDATE
+    const liveRegion = document.getElementById('aria-live-region');
+    liveRegion.innerText = "Assessment updated. " + headline + ". Capability " + capPct + " percent, Assurance " + assurPct + " percent. " + relianceVerdict;
+}
+
+function findLowestCapDimension(data) {
+    let lowest = { id: 0, cap: 999 };
+    DIMENSIONS.forEach(d => {
+        const dData = data[d.id];
+        if (!dData.na && dData.cap !== -1 && dData.cap < lowest.cap) {
+            lowest = { id: d.id, cap: dData.cap };
+        }
+    });
+    return lowest.id;
+}
+
+function exportJSON() {
+    const state = buildStateObject();
+    const capEl = document.getElementById('cap-score');
+    const assurEl = document.getElementById('assur-score');
+    const postureEl = document.getElementById('posture-text');
+
+    const capText = capEl.innerText.replace('%', '');
+    const assurText = assurEl.innerText.replace('%', '');
+    const capNum = capText === '--' ? null : parseInt(capText);
+    const assurNum = assurText === '--' ? null : parseInt(assurText);
+
+    let quadrant = "incomplete";
+    if (capNum !== null && assurNum !== null) {
+        const cZ = getZone(capNum);
+        const aZ = getZone(assurNum);
+        if (cZ === "high" && aZ === "high") quadrant = "ready";
+        else if (cZ === "low" && aZ === "low") quadrant = "risk";
+        else if (cZ === "high" && aZ === "low") quadrant = "gap";
+        else if (cZ === "low" && aZ === "high") quadrant = "emerge";
+        else quadrant = "transitional";
+    }
+
+    const exportObj = {
+        schemaVersion: "6.1.0",
+        schemaName: "Governability Diagnostic Protocol",
+        generatedAt: new Date().toISOString(),
+        assessment: {
+            metadata: state.metadata,
+            dimensions: state.data,
+            notes: state.notes,
+            summary: state.summary
+        },
+        diligenceMatrix: {
+            capabilityScore: capNum,
+            assuranceScore: assurNum,
+            quadrant: quadrant,
+            maxCapabilityScore: MAX_CAP_SCORE,
+            maxAssuranceScore: MAX_ASSUR_SCORE,
+            totalWeight: TOTAL_WEIGHT
+        },
+        narrative: {
+            confidenceStatement: document.getElementById('confidence-statement').value,
+            priorityGaps: document.getElementById('priority-gaps').value,
+            relianceRecommendation: document.getElementById('reliance-verdict').innerText,
+            relianceRationale: document.getElementById('reliance-rationale').innerText,
+            reassessmentTriggers: document.getElementById('reassessment-triggers').value
+        },
+        floorRulesTriggered: [],
+        regulatoryMapping: {}
+    };
+
+    // Add regulatory mapping
+    DIMENSIONS.forEach(d => {
+        exportObj.regulatoryMapping["D" + d.id] = {
+            title: d.title,
+            tags: d.regulatoryTags
+        };
+    });
+
+    // Detect floor rules from current state
+    const warningEl = document.getElementById('floor-warning');
+    if (warningEl.style.display !== 'none' && warningEl.innerText) {
+        if (warningEl.innerText.includes("Opacity Penalty")) exportObj.floorRulesTriggered.push("Opacity Penalty (>2 N/A)");
+        if (warningEl.innerText.includes("D3 Floor Rule")) exportObj.floorRulesTriggered.push("D3 Floor Rule (No Override)");
+        if (warningEl.innerText.includes("D10 Floor Rule")) exportObj.floorRulesTriggered.push("D10 Floor Rule (No Containment)");
+        if (warningEl.innerText.includes("D2 Backstop")) exportObj.floorRulesTriggered.push("D2 Backstop (Zero Audit Assurance)");
+    }
+
+    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const company = (document.getElementById('meta-company').value || 'assessment').replace(/\s+/g, '_').toLowerCase();
+    a.href = url;
+    a.download = "governability_diagnostic_v61_" + company + "_" + new Date().toISOString().split('T')[0] + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function buildStateObject() {
+    const state = {
+        metadata: {
+            criticality: document.getElementById('meta-criticality').value,
+            audience: document.getElementById('meta-audience').value,
+            company: document.getElementById('meta-company').value,
+            assessor: document.getElementById('meta-assessor').value,
+            confidence: document.getElementById('meta-confidence').value,
+            date: document.getElementById('meta-date').value,
+            valid: document.getElementById('meta-valid').value
+        },
+        data: {},
+        notes: {}
+    };
+    DIMENSIONS.forEach(d => {
+        state.data[d.id] = {
+            cap: document.getElementById('dim' + d.id + '-cap').value,
+            evid: document.getElementById('dim' + d.id + '-evid').value,
+            na: document.getElementById('dim' + d.id + '-na').value
+        };
+        const noteEl = document.getElementById('dim' + d.id + '-notes');
+        if (noteEl) state.notes[d.id] = noteEl.value;
+    });
+    const nextActions = document.getElementById('next-actions');
+    state.summary = { actions: nextActions ? nextActions.value : '' };
+    return state;
+}
+
+function debouncedSave() {
+    if (isRestoring) return;
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveState();
+    }, 400);
+}
+
+function saveState() {
+    const state = buildStateObject();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const ind = document.getElementById('autosave-status');
+    ind.style.opacity = '1';
+    setTimeout(() => ind.style.opacity = '0.3', 1000);
+}
+
+function loadState() {
+    renderDimensions();
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) {
+        document.getElementById('meta-date').valueAsDate = new Date();
+        updateValidUntil();
+        checkStale();
+        return;
+    }
+    try {
+        isRestoring = true;
+        const state = JSON.parse(saved);
+        if (state.metadata) {
+            if (state.metadata.criticality) document.getElementById('meta-criticality').value = state.metadata.criticality;
+            if (state.metadata.audience) document.getElementById('meta-audience').value = state.metadata.audience;
+            if (state.metadata.company) document.getElementById('meta-company').value = state.metadata.company;
+            if (state.metadata.assessor) document.getElementById('meta-assessor').value = state.metadata.assessor;
+            if (state.metadata.confidence) document.getElementById('meta-confidence').value = state.metadata.confidence;
+            if (state.metadata.date) document.getElementById('meta-date').value = state.metadata.date;
+            if (state.metadata.valid) document.getElementById('meta-valid').value = state.metadata.valid;
+        }
+        if (state.data) {
+            DIMENSIONS.forEach(d => {
+                const dData = state.data[d.id];
+                if (dData) {
+                    if (dData.na === "true") {
+                        document.getElementById('dim' + d.id + '-na').value = "true";
+                        document.getElementById('btn-na-' + d.id).classList.add('na-selected');
+                    } else {
+                        if (dData.cap !== '-1' && dData.cap !== -1) {
+                            document.getElementById('dim' + d.id + '-cap').value = dData.cap;
+                            const capOpts = document.querySelectorAll('#cap-group-' + d.id + ' .score-option');
+                            capOpts.forEach(opt => {
+                                if (parseInt(opt.getAttribute('data-val')) === parseInt(dData.cap)) {
+                                    opt.classList.add('selected');
+                                    opt.setAttribute('aria-checked', 'true');
+                                }
+                            });
+                        }
+                        if (dData.evid !== '-1' && dData.evid !== -1) {
+                            document.getElementById('dim' + d.id + '-evid').value = dData.evid;
+                            const evidOpts = document.querySelectorAll('#evid-group-' + d.id + ' .score-option');
+                            evidOpts.forEach(opt => {
+                                if (parseInt(opt.getAttribute('data-val')) === parseInt(dData.evid)) {
+                                    opt.classList.add('selected');
+                                    opt.setAttribute('aria-checked', 'true');
+                                }
+                            });
+                        }
+                    }
+                }
+                if (state.notes && state.notes[d.id]) {
+                    document.getElementById('dim' + d.id + '-notes').value = state.notes[d.id];
+                }
+            });
+        }
+        if (state.summary && state.summary.actions) {
+            document.getElementById('next-actions').value = state.summary.actions;
+        }
+        isRestoring = false;
+        calculateTotal();
+        checkStale();
+    } catch(e) {
+        isRestoring = false;
+        console.error("Failed to parse saved state", e);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', loadState);
+
+// ============================================================
+// ASSURANCE MVP INTAKE BRIDGE
+// ============================================================
+
+/**
+ * Sends the current Track D diagnostic to the Assurance MVP intake adapter.
+ * Uses the same exportJSON() object shape but POSTs it to the intake endpoint
+ * instead of downloading it as a file.
+ * 
+ * The adapter will:
+ * 1. Validate the v6.1 schema
+ * 2. Hash the content for idempotency
+ * 3. Create an L1_diagnostic assessment
+ * 4. Store the Diligence Matrix as self_assessment_context (Settled Decision 1)
+ * 5. Create evidence claims capped at E1 (Settled Decision 2)
+ */
+function sendToAssurance() {
+    const statusEl = document.getElementById('assurance-status');
+    const btn = document.getElementById('btn-send-assurance');
+
+    // Build the same export object used by exportJSON()
+    const state = buildStateObject();
+    const capEl = document.getElementById('cap-score');
+    const assurEl = document.getElementById('assur-score');
+    const capText = capEl.innerText.replace('%', '');
+    const assurText = assurEl.innerText.replace('%', '');
+    const capNum = capText === '--' ? null : parseInt(capText);
+    const assurNum = assurText === '--' ? null : parseInt(assurText);
+
+    // Check completeness
+    let answered = 0;
+    DIMENSIONS.forEach(d => {
+        const isNA = document.getElementById('dim' + d.id + '-na').value === "true";
+        const capVal = parseInt(document.getElementById('dim' + d.id + '-cap').value);
+        const evidVal = parseInt(document.getElementById('dim' + d.id + '-evid').value);
+        if (isNA || (capVal !== -1 && evidVal !== -1)) answered++;
+    });
+
+    if (answered < TOTAL_DIMENSIONS) {
+        showAssuranceStatus('error', '⚠️ Cannot send incomplete assessment. All 10 dimensions must be scored or marked N/A.');
+        return;
+    }
+
+    let quadrant = "incomplete";
+    if (capNum !== null && assurNum !== null) {
+        const cZ = getZone(capNum);
+        const aZ = getZone(assurNum);
+        if (cZ === "high" && aZ === "high") quadrant = "ready";
+        else if (cZ === "low" && aZ === "low") quadrant = "risk";
+        else if (cZ === "high" && aZ === "low") quadrant = "gap";
+        else if (cZ === "low" && aZ === "high") quadrant = "emerge";
+        else quadrant = "transitional";
+    }
+
+    const exportObj = {
+        schemaVersion: "6.1.0",
+        schemaName: "Governability Diagnostic Protocol",
+        generatedAt: new Date().toISOString(),
+        assessment: {
+            metadata: state.metadata,
+            dimensions: state.data,
+            notes: state.notes,
+            summary: state.summary
+        },
+        diligenceMatrix: {
+            capabilityScore: capNum,
+            assuranceScore: assurNum,
+            quadrant: quadrant,
+            maxCapabilityScore: MAX_CAP_SCORE,
+            maxAssuranceScore: MAX_ASSUR_SCORE,
+            totalWeight: TOTAL_WEIGHT
+        },
+        narrative: {
+            confidenceStatement: document.getElementById('confidence-statement').value,
+            priorityGaps: document.getElementById('priority-gaps').value,
+            relianceRecommendation: document.getElementById('reliance-verdict').innerText,
+            relianceRationale: document.getElementById('reliance-rationale').innerText,
+            reassessmentTriggers: document.getElementById('reassessment-triggers').value
+        },
+        floorRulesTriggered: [],
+        regulatoryMapping: {}
+    };
+
+    // Regulatory mapping
+    DIMENSIONS.forEach(d => {
+        exportObj.regulatoryMapping["D" + d.id] = { title: d.title, tags: d.regulatoryTags };
+    });
+
+    // Floor rules
+    const warningEl = document.getElementById('floor-warning');
+    if (warningEl.style.display !== 'none' && warningEl.innerText) {
+        if (warningEl.innerText.includes("Opacity Penalty")) exportObj.floorRulesTriggered.push("Opacity Penalty (>2 N/A)");
+        if (warningEl.innerText.includes("D3 Floor Rule")) exportObj.floorRulesTriggered.push("D3 Floor Rule (No Override)");
+        if (warningEl.innerText.includes("D10 Floor Rule")) exportObj.floorRulesTriggered.push("D10 Floor Rule (No Containment)");
+        if (warningEl.innerText.includes("D2 Backstop")) exportObj.floorRulesTriggered.push("D2 Backstop (Zero Audit Assurance)");
+    }
+
+    // Determine the intake endpoint
+    // Default: the trust-readiness-diagnostic API running locally or on the same origin
+    const ASSURANCE_INTAKE_URL = window.ASSURANCE_INTAKE_URL || '/api/diagnostics/intake';
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    showAssuranceStatus('pending', '⏳ Sending diagnostic to Assurance intake...');
+
+    fetch(ASSURANCE_INTAKE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(exportObj)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(body => {
+                throw new Error(`Server returned ${response.status}: ${body}`);
+            });
+        }
+        return response.json();
+    })
+    .then(result => {
+        const hash = result.sourceArtifactHash || result.hash || '(unknown)';
+        showAssuranceStatus('success',
+            `✅ Diagnostic received. Assessment created at L1_diagnostic level. ` +
+            `Source hash: ${hash.substring(0, 12)}... ` +
+            `Floor conditions: ${result.floorConditions ? JSON.stringify(result.floorConditions) : 'none detected'}`
+        );
+        btn.textContent = 'Sent ✓';
+        setTimeout(() => {
+            btn.textContent = 'Send to Assurance →';
+            btn.disabled = false;
+        }, 5000);
+    })
+    .catch(err => {
+        showAssuranceStatus('error',
+            `❌ Failed to send: ${err.message}. ` +
+            `Use "Download JSON" to save locally and import manually.`
+        );
+        btn.textContent = 'Send to Assurance →';
+        btn.disabled = false;
+    });
+}
+
+function showAssuranceStatus(type, message) {
+    const el = document.getElementById('assurance-status');
+    el.style.display = 'block';
+    el.textContent = message;
+    if (type === 'success') {
+        el.style.background = '#0a2e0a'; el.style.color = '#4ade80'; el.style.border = '1px solid #166534';
+    } else if (type === 'error') {
+        el.style.background = '#2e0a0a'; el.style.color = '#f87171'; el.style.border = '1px solid #991b1b';
+    } else {
+        el.style.background = '#1a1a2e'; el.style.color = '#93c5fd'; el.style.border = '1px solid #1e3a5f';
+    }
+    if (type !== 'pending') {
+        setTimeout(() => { el.style.display = 'none'; }, 10000);
+    }
+}
+</script>
+</body>
+</html>

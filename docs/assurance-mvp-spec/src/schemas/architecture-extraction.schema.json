@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ArchitectureExtractionOutput",
+  "description": "Structured output for the LLM's ONLY job at this stage: turn uploaded intake material into candidate Authority Map nodes and edges. This schema has no field for evidence_level above E1 and no field for asserting a control is adequate, by design, so the model has no way to overreach even if prompted to.",
+  "type": "object",
+  "required": ["nodes", "edges", "extraction_confidence", "unresolved_questions"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["temp_id", "node_type", "name"],
+        "properties": {
+          "temp_id": { "type": "string", "description": "Local reference id for use in edges below, not a database id" },
+          "node_type": { "enum": ["agent", "model", "memory", "tool", "api", "data_source", "external_agent", "identity"] },
+          "name": { "type": "string" },
+          "identity": { "type": "string" },
+          "source_excerpt": { "type": "string", "description": "The exact text this node was extracted from, required for traceability" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_temp_id", "target_temp_id", "edge_type", "permission_scope", "source_excerpt"],
+        "properties": {
+          "source_temp_id": { "type": "string" },
+          "target_temp_id": { "type": "string" },
+          "edge_type": { "enum": ["reads", "writes", "calls", "delegates_to", "authenticates_as"] },
+          "permission_scope": { "type": "string" },
+          "requires_human_approval": { "type": ["boolean", "null"], "description": "null if the source material does not say, never default to false" },
+          "data_classification": { "enum": ["public", "internal", "confidential", "restricted", null] },
+          "action_reversibility": { "enum": ["reversible", "partially_reversible", "irreversible", null] },
+          "source_excerpt": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "extraction_confidence": {
+      "enum": ["low", "moderate", "high"],
+      "description": "The model's confidence in the extraction ITSELF, not in the system's security. Never omit."
+    },
+    "unresolved_questions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicit list of what the source material did not answer. An empty array must be a deliberate claim, not an omission."
+    }
+  },
+  "additionalProperties": false
+}

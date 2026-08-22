@@ -1,0 +1,22 @@
+**/__pycache__/
+**/.venv/
+.venv/
+*.py[cod]
+.env
+.env.*
+*.log
+
+# Generated audit output files (run the tool to regenerate)
+tools/track-a-ai-shopping-visibility/visibility_snapshot_*
+tools/track-a-ai-shopping-visibility/batch_outreach_summary.json
+
+# Trust readiness diagnostic (nested Next.js project)
+trust-readiness-diagnostic/node_modules/
+trust-readiness-diagnostic/.next/
+trust-readiness-diagnostic/.env.local
+trust-readiness-diagnostic/.data/
+trust-readiness-diagnostic/.vercel/
+
+# Adapter (nested TypeScript project)
+tools/track-d-governability-audit/adapter/node_modules/
+tools/track-d-governability-audit/adapter/dist/

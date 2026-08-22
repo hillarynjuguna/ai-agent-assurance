@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "api-to-mcp-wrapper-demo": {
+      "command": "python",
+      "args": [
+        "/ABSOLUTE/PATH/TO/tools/track-b-api-to-mcp-wrapper/server.py"
+      ]
+    }
+  }
+}

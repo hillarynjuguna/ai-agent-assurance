@@ -1,0 +1,47 @@
+{
+  "name": "assurance-assessment-glue",
+  "note": "Phase 13/C boundary: this workflow handles notification and delivery ONLY. No node here writes to findings.evidence_level or performs severity/confidence logic, that lives in application code (src/domain, an assessment-engine service), called via HTTP nodes below, never reimplemented in n8n expressions.",
+  "nodes": [
+    {
+      "id": "trigger_intake_received",
+      "type": "n8n-nodes-base.webhook",
+      "name": "Intake Received",
+      "notes": "Fires when POST /assessments/{id}/intake completes in the application API"
+    },
+    {
+      "id": "notify_operator_intake",
+      "type": "n8n-nodes-base.emailSend",
+      "name": "Notify Operator: New Intake",
+      "notes": "Glue only, no business logic"
+    },
+    {
+      "id": "trigger_review_required",
+      "type": "n8n-nodes-base.webhook",
+      "name": "Findings Awaiting Review",
+      "notes": "Fires when runDiagnostics completes and produces findings at or above the review-required severity threshold, threshold check happens in the application API, not here"
+    },
+    {
+      "id": "notify_reviewer_queue",
+      "type": "n8n-nodes-base.emailSend",
+      "name": "Notify Reviewer: Queue Updated",
+      "notes": "Sends the reviewer a summary and a link. Does not include a way to mark reviewed from the email, that must go through the authenticated API"
+    },
+    {
+      "id": "trigger_report_ready",
+      "type": "n8n-nodes-base.webhook",
+      "name": "Report Ready",
+      "notes": "Fires when GET /assessments/{id}/report succeeds and status = report_ready"
+    },
+    {
+      "id": "deliver_report",
+      "type": "n8n-nodes-base.emailSend",
+      "name": "Deliver Report to Client",
+      "notes": "Attaches the generated report, application API is the source of the file, this node only sends it"
+    }
+  ],
+  "connections": {
+    "trigger_intake_received": ["notify_operator_intake"],
+    "trigger_review_required": ["notify_reviewer_queue"],
+    "trigger_report_ready": ["deliver_report"]
+  }
+}

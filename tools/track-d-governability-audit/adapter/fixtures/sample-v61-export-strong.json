@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "6.1.0",
+  "schemaName": "Governability Diagnostic Protocol",
+  "generatedAt": "2025-03-15T09:00:00.000Z",
+  "assessment": {
+    "metadata": {
+      "criticality": "operational",
+      "audience": "general",
+      "company": "GovTech Solutions",
+      "assessor": "A. Chen",
+      "confidence": "high",
+      "date": "2025-03-15",
+      "valid": "2025-06-13"
+    },
+    "dimensions": {
+      "1": { "cap": "3", "evid": "4", "na": "false" },
+      "2": { "cap": "3", "evid": "4", "na": "false" },
+      "3": { "cap": "3", "evid": "3", "na": "false" },
+      "4": { "cap": "3", "evid": "3", "na": "false" },
+      "5": { "cap": "3", "evid": "3", "na": "false" },
+      "6": { "cap": "3", "evid": "2", "na": "false" },
+      "7": { "cap": "3", "evid": "2", "na": "false" },
+      "8": { "cap": "3", "evid": "3", "na": "false" },
+      "9": { "cap": "3", "evid": "3", "na": "false" },
+      "10": { "cap": "3", "evid": "4", "na": "false" }
+    },
+    "notes": {
+      "1": "Complete action classification taxonomy with enforced gating and documented rollback paths for all workflows. Cryptographic attestation of rollback execution.",
+      "2": "Merkle-verified append-only audit trail spanning all platform components. Cross-platform hash-chain verification implemented.",
+      "3": "Mandatory human authentication required at every irreversibility boundary. Topology Guard pattern with graduated override at all decision gates.",
+      "4": "Formal verification of system invariants via CI/CD. Continuous drift detection with automated alerts. Quarterly red-team exercises.",
+      "5": "Dynamic delegation with asymmetric evidence-based gating. Context contracts enforced at the orchestration layer with per-action scoping.",
+      "6": "Self-assessment documented against SOC 2, ISO 27001, and investor due diligence checklists. Third-party validation pending.",
+      "7": "Counterparty-specific reporting formats generated: regulatory bundles, legal summaries, and investor tear-sheets. However, only internal review performed.",
+      "8": "Enterprise agreement with Azure OpenAI, zero-retention DPA, and contractual audit rights. Model lineage tracked with version pinning.",
+      "9": "Dedicated AI incident response playbooks covering drift, jailbreak, and prompt injection scenarios. Automated containment with SLA-bound restoration.",
+      "10": "Zero-trust compartmentalization with ephemeral sandboxes, network segmentation, per-agent scoped credentials, and automatic budget exhaustion killswitches."
+    },
+    "summary": {
+      "actions": "1. Complete third-party validation for D6 and D7 counterparty documentation.\n2. Schedule annual external audit for SOC 2 Type II certification.\n3. Extend formal verification coverage to newly deployed agent workflows."
+    }
+  },
+  "diligenceMatrix": {
+    "capabilityScore": 100,
+    "assuranceScore": 82,
+    "quadrant": "ready",
+    "maxCapabilityScore": 84,
+    "maxAssuranceScore": 112,
+    "totalWeight": 28
+  },
+  "narrative": {
+    "confidenceStatement": "The operation demonstrates sophisticated governance mechanisms (Capability: 100%) supported by independently verifiable artifacts (Assurance: 82%). This aligns with the 'Institutionally Ready' archetype.",
+    "priorityGaps": "No critical priority gaps detected. Matrix positioning supports the current architecture.",
+    "relianceRecommendation": "UNCONDITIONAL RELIANCE",
+    "relianceRationale": "Assessment supports immediate institutional reliance. Both capability and assurance exceed thresholds with no critical gaps detected.",
+    "reassessmentTriggers": "Re-assess within 90 days, or immediately if any of the following occur:\n1. Audit trail infrastructure rotation or key expiry (D2 audit provenance)."
+  },
+  "floorRulesTriggered": [],
+  "regulatoryMapping": {
+    "D1": { "title": "Reversibility Classification", "tags": ["NIST: Map", "ISO 42001 A.6", "EU AI Act Art.9"] },
+    "D2": { "title": "Audit Provenance", "tags": ["NIST: Measure", "ISO 42001 Cl.9", "EU AI Act Art.12"] },
+    "D3": { "title": "Human Override Capability", "tags": ["NIST: Manage", "ISO 42001 A.3.2", "EU AI Act Art.14"] },
+    "D4": { "title": "Behavioral Verification", "tags": ["NIST: Measure", "ISO 42001 A.5", "EU AI Act Art.11"] },
+    "D5": { "title": "Delegation Boundaries", "tags": ["NIST: Govern", "ISO 42001 A.2", "EU AI Act Art.9"] },
+    "D6": { "title": "Counterparty Risk Profile", "tags": ["Institutional DD"] },
+    "D7": { "title": "Institutional Legibility", "tags": ["NIST: Govern", "ISO 42001 A.7.5", "EU AI Act Art.13"] },
+    "D8": { "title": "Model Provenance & Supply Chain", "tags": ["NIST: Map", "ISO 42001 A.6/A.7", "EU AI Act Art.10"] },
+    "D9": { "title": "Incident Response", "tags": ["NIST: Manage", "ISO 42001 A.6.2.6", "EU AI Act Art.9/17"] },
+    "D10": { "title": "Containment & Blast Radius", "tags": ["NIST: Manage", "ISO 42001 A.3.2/A.7.4", "EU AI Act Art.9"] }
+  }
+}

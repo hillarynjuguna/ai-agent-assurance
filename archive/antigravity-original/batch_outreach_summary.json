@@ -1,0 +1,26 @@
+[
+  {
+    "domain": "allbirds.com",
+    "score": 50,
+    "missing_checks": [
+      "Structured Data Legibility (JSON-LD Product/Offer Schema)",
+      "Model Context Protocol (MCP) Manifest Endpoint"
+    ],
+    "cold_email": "Subject: Urgent: allbirds.com is losing AI Shopping Agent traffic (ChatGPT/Perplexity)\n\nHi Allbirds Team,\n\nI ran an autonomous AI shopping agent evaluation on allbirds.com. \n\nWhen AI agents like ChatGPT, Claude, and Perplexity attempt to search for products on behalf of shoppers, allbirds.com scored only **50/100 in Machine Legibility**.\n\nKey reasons AI agents are currently dropping purchase intents for your store:\n\n- Structured Data Legibility (JSON-LD Product/Offer Schema)\n- Model Context Protocol (MCP) Manifest Endpoint\n\nWe generated a 1-page Agentic Readiness Audit Report showing exactly where agent transactions break, along with a ready-to-deploy `/.well-known/mcp.json` manifest snippet.\n\nWould you be open to seeing the 60-second video audit and the drop-in schema fix?\n\nBest regards,\nAgentic Commerce Readiness Team\n"
+  },
+  {
+    "domain": "gymshark.com",
+    "score": 50,
+    "missing_checks": [
+      "Structured Data Legibility (JSON-LD Product/Offer Schema)",
+      "Model Context Protocol (MCP) Manifest Endpoint"
+    ],
+    "cold_email": "Subject: Urgent: gymshark.com is losing AI Shopping Agent traffic (ChatGPT/Perplexity)\n\nHi Gymshark Team,\n\nI ran an autonomous AI shopping agent evaluation on gymshark.com. \n\nWhen AI agents like ChatGPT, Claude, and Perplexity attempt to search for products on behalf of shoppers, gymshark.com scored only **50/100 in Machine Legibility**.\n\nKey reasons AI agents are currently dropping purchase intents for your store:\n\n- Structured Data Legibility (JSON-LD Product/Offer Schema)\n- Model Context Protocol (MCP) Manifest Endpoint\n\nWe generated a 1-page Agentic Readiness Audit Report showing exactly where agent transactions break, along with a ready-to-deploy `/.well-known/mcp.json` manifest snippet.\n\nWould you be open to seeing the 60-second video audit and the drop-in schema fix?\n\nBest regards,\nAgentic Commerce Readiness Team\n"
+  },
+  {
+    "domain": "chubbieswear.com",
+    "score": 0,
+    "missing_checks": [],
+    "cold_email": "Subject: Urgent: chubbieswear.com is losing AI Shopping Agent traffic (ChatGPT/Perplexity)\n\nHi Chubbieswear Team,\n\nI ran an autonomous AI shopping agent evaluation on chubbieswear.com. \n\nWhen AI agents like ChatGPT, Claude, and Perplexity attempt to search for products on behalf of shoppers, chubbieswear.com scored only **0/100 in Machine Legibility**.\n\nKey reasons AI agents are currently dropping purchase intents for your store:\n\n- \n\nWe generated a 1-page Agentic Readiness Audit Report showing exactly where agent transactions break, along with a ready-to-deploy `/.well-known/mcp.json` manifest snippet.\n\nWould you be open to seeing the 60-second video audit and the drop-in schema fix?\n\nBest regards,\nAgentic Commerce Readiness Team\n"
+  }
+]
