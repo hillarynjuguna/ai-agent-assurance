@@ -10,7 +10,7 @@
  * with or blended into finding severity, confidence, or evidence levels.
  */
 
-import type { TrackDSelfAssessmentContext, TrackDDimensionImport } from './assurance-types.js';
+import type { TrackDSelfAssessmentContext, TrackDDimensionImport } from './assurance-types';
 
 /** Structured report section for Track D diagnostic context */
 export interface TrackDReportContextSection {

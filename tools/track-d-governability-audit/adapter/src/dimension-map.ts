@@ -1,4 +1,4 @@
-import { FindingSeverity } from './assurance-types.js';
+import { FindingSeverity } from './assurance-types';
 
 export const MAPPING_VERSION = '1.0.0';
 

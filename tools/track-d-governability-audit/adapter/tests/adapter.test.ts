@@ -13,10 +13,10 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 // We import relatively since there's no package.json
-import { validateTrackDExport } from '../src/validate.js';
-import { hashTrackDExport } from '../src/hash.js';
-import { translateTrackDToAssurance } from '../src/translate.js';
-import { TRACK_D_DIMENSION_MAP, MAPPING_VERSION } from '../src/dimension-map.js';
+import { validateTrackDExport } from '../src/validate';
+import { hashTrackDExport } from '../src/hash';
+import { translateTrackDToAssurance } from '../src/translate';
+import { TRACK_D_DIMENSION_MAP, MAPPING_VERSION } from '../src/dimension-map';
 
 // ============================================================
 // TEST FIXTURES

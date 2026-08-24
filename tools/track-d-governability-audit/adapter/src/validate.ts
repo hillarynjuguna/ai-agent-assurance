@@ -1,4 +1,4 @@
-import { TrackDExportV610, ValidatedTrackDExport } from './track-d-types.js';
+import { TrackDExportV610, ValidatedTrackDExport } from './track-d-types';
 
 export function validateTrackDExport(data: any): { valid: true; data: ValidatedTrackDExport } | { valid: false; errors: string[] } {
   const errors: string[] = [];

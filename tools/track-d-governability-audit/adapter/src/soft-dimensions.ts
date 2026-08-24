@@ -16,9 +16,9 @@
  * - submitted_by_type for any evidence created from these notes is 'client'
  */
 
-import type { EvidenceLevel, FindingSeverity, FindingConfidence } from './assurance-types.js';
-import { TRACK_D_DIMENSION_MAP } from './dimension-map.js';
-import type { ValidatedTrackDExport } from './track-d-types.js';
+import type { EvidenceLevel, FindingSeverity, FindingConfidence } from './assurance-types';
+import { TRACK_D_DIMENSION_MAP } from './dimension-map';
+import type { ValidatedTrackDExport } from './track-d-types';
 
 /** The dimensions that use LLM-assisted finding drafts instead of deterministic rules */
 export const LLM_DRAFT_DIMENSIONS = [4, 6, 7, 8, 9] as const;

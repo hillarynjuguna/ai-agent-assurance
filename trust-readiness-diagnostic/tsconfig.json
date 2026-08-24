@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@adapter/*": ["../tools/track-d-governability-audit/adapter/src/*"]
     }
   },
   "include": [

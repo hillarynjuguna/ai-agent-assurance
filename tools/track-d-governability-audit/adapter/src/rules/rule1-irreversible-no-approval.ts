@@ -1,4 +1,4 @@
-import { CandidateFinding, AuthorityMapEdgeInput, AuthorityMapNodeInput } from './types.js';
+import { CandidateFinding, AuthorityMapEdgeInput, AuthorityMapNodeInput } from './types';
 
 /**
  * Rule 1: 

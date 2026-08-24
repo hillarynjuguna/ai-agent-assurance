@@ -1,4 +1,4 @@
-import { ValidatedTrackDExport } from './track-d-types.js';
+import { ValidatedTrackDExport } from './track-d-types';
 import { 
   TrackDImportResult, 
   EvidenceLevel, 
@@ -6,8 +6,8 @@ import {
   TrackDSelfAssessmentContext,
   EvidenceType,
   SubmittedByType
-} from './assurance-types.js';
-import { TRACK_D_DIMENSION_MAP } from './dimension-map.js';
+} from './assurance-types';
+import { TRACK_D_DIMENSION_MAP } from './dimension-map';
 
 /**
  * Maps Track D's 0-4 evidence scale to Assurance MVP EvidenceLevel.

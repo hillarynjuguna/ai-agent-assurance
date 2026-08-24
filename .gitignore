@@ -20,3 +20,5 @@ trust-readiness-diagnostic/.vercel/
 # Adapter (nested TypeScript project)
 tools/track-d-governability-audit/adapter/node_modules/
 tools/track-d-governability-audit/adapter/dist/
+tools/track-d-governability-audit/adapter/.data/
+
