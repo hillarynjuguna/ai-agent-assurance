@@ -3,7 +3,10 @@ import crypto from "node:crypto";
 import { 
   validateTrackDExport, 
   hashTrackDExport, 
-  translateTrackDToAssurance 
+  translateTrackDToAssurance,
+  seedAuthorityMapFromTrackD,
+  executeDeterministicRules,
+  generateAssessmentFindings
 } from "../../../../../../tools/track-d-governability-audit/adapter/src/index";
 import { 
   saveAssuranceAssessment, 
@@ -57,7 +60,26 @@ export async function POST(req: Request) {
     // 4. Generate persistent assessment identifier (UUID v4)
     const assessmentId = crypto.randomUUID();
 
-    // 5. Persist record with raw submission preservation and translated representation
+    // 5. Phase 3: Seed Authority Map conservatively strictly from exported data
+    const authorityMap = seedAuthorityMapFromTrackD(
+      validation.data,
+      sourceHash,
+      assessmentId
+    );
+
+    // 6. Phase 3: Execute deterministic rules against Authority Map structure
+    const ruleExecution = executeDeterministicRules(
+      authorityMap.edges,
+      authorityMap.nodes
+    );
+
+    // 7. Phase 3: Generate traceable Assessment Findings
+    const findings = generateAssessmentFindings(
+      ruleExecution.findings,
+      assessmentId
+    );
+
+    // 8. Persist record with raw submission, translated result, authority map, and findings
     const record: StoredAssuranceAssessment = {
       id: assessmentId,
       sourceHash,
@@ -65,11 +87,13 @@ export async function POST(req: Request) {
       schemaVersion: validation.data.schemaVersion,
       rawSubmission: rawText,
       result: translatedResult,
+      authorityMap,
+      findings
     };
 
     await saveAssuranceAssessment(record);
 
-    // 6. Return structured response adhering to response contract
+    // 9. Return structured response adhering to response contract
     return NextResponse.json({
       assessment_id: assessmentId,
       assessment_level: translatedResult.assessment.level,
@@ -78,6 +102,12 @@ export async function POST(req: Request) {
       source_artifact_hash: sourceHash,
       floor_conditions: translatedResult.floorConditions,
       evidence_claim_count: translatedResult.evidenceClaims.length,
+      findings_count: findings.length,
+      findings,
+      authority_map: {
+        node_count: authorityMap.nodes.length,
+        edge_count: authorityMap.edges.length,
+      },
       received_at: receivedAt,
       schema_version: validation.data.schemaVersion,
       // camelCase aliases for client convenience
@@ -86,6 +116,7 @@ export async function POST(req: Request) {
       sourceHash,
       floorConditions: translatedResult.floorConditions,
       evidenceClaimCount: translatedResult.evidenceClaims.length,
+      findingsCount: findings.length,
       receivedAt,
       schemaVersion: validation.data.schemaVersion,
     });

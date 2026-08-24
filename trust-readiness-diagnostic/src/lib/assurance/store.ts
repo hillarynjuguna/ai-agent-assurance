@@ -1,11 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { TrackDImportResult } from "../../../../tools/track-d-governability-audit/adapter/src/assurance-types";
+import type { SeededAuthorityMap } from "../../../../tools/track-d-governability-audit/adapter/src/authority-map-seed";
+import type { AssessmentFinding } from "../../../../tools/track-d-governability-audit/adapter/src/findings";
 
 /**
  * Stored Assurance Assessment Record
- * Preserves the raw submission, hash integrity, received timestamp, schema version,
- * and the translated Assurance domain representation.
+ * Preserves raw submission, hash integrity, received timestamp, schema version,
+ * translated Assurance domain representation, seeded Authority Map, and deterministic findings.
  */
 export interface StoredAssuranceAssessment {
   id: string;
@@ -14,6 +16,8 @@ export interface StoredAssuranceAssessment {
   schemaVersion: string;
   rawSubmission: string;
   result: TrackDImportResult;
+  authorityMap?: SeededAuthorityMap;
+  findings?: AssessmentFinding[];
 }
 
 const memoryStore = new Map<string, StoredAssuranceAssessment>();
@@ -134,4 +138,3 @@ export async function clearStorageForTesting(): Promise<void> {
     // Ignore if directory doesn't exist
   }
 }
-

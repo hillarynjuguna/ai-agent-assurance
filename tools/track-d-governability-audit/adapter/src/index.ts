@@ -14,3 +14,31 @@ export type { SoftDimensionDraftInput, SoftDimensionDraftBatch } from './soft-di
 // Report context section
 export { generateTrackDReportContext, renderTrackDContextMarkdown } from './report-context';
 export type { TrackDReportContextSection, TrackDDimensionSummary } from './report-context';
+
+// Phase 3: Authority Map Seeder & Provenance
+export { seedAuthorityMapFromTrackD } from './authority-map-seed';
+export type { 
+  SeededAuthorityMap, 
+  SeededAuthorityMapNode, 
+  SeededAuthorityMapEdge, 
+  AuthorityElementProvenance 
+} from './authority-map-seed';
+
+// Phase 3: Deterministic Rules Engine
+export { 
+  executeDeterministicRules,
+  evaluateRule1IrreversibleNoApproval,
+  evaluateRule2ExternalDelegation,
+  evaluateRule3SharedIdentity,
+  evaluateD10ContainmentRule
+} from './rules/index';
+export type { 
+  CandidateFinding, 
+  AuthorityMapEdgeInput, 
+  AuthorityMapNodeInput, 
+  RuleExecutionResult 
+} from './rules/index';
+
+// Phase 3: Finding Generator
+export { generateAssessmentFindings } from './findings';
+export type { AssessmentFinding } from './findings';
