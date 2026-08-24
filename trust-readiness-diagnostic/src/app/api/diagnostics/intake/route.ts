@@ -6,7 +6,8 @@ import {
   translateTrackDToAssurance,
   seedAuthorityMapFromTrackD,
   executeDeterministicRules,
-  generateAssessmentFindings
+  generateAssessmentFindings,
+  createSystemSnapshotFromTrackD
 } from "../../../../../../tools/track-d-governability-audit/adapter/src/index";
 import { 
   saveAssuranceAssessment, 
@@ -57,29 +58,38 @@ export async function POST(req: Request) {
       receivedAt
     );
 
-    // 4. Generate persistent assessment identifier (UUID v4)
+    // 4. Generate persistent assessment identifier (UUID v4) and system identifier
     const assessmentId = crypto.randomUUID();
+    const systemId = `system-${validation.data.assessment.metadata.company.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'default'}`;
 
     // 5. Phase 3: Seed Authority Map conservatively strictly from exported data
     const authorityMap = seedAuthorityMapFromTrackD(
       validation.data,
       sourceHash,
-      assessmentId
+      systemId
     );
 
-    // 6. Phase 3: Execute deterministic rules against Authority Map structure
+    // 6. Phase 4: Create frozen, immutable SystemSnapshot representing this exact assessed state
+    const systemSnapshot = createSystemSnapshotFromTrackD(
+      validation.data,
+      sourceHash,
+      authorityMap,
+      systemId
+    );
+
+    // 7. Phase 3: Execute deterministic rules against Authority Map structure
     const ruleExecution = executeDeterministicRules(
       authorityMap.edges,
       authorityMap.nodes
     );
 
-    // 7. Phase 3: Generate traceable Assessment Findings
+    // 8. Phase 3: Generate traceable Assessment Findings anchored to snapshot through assessment
     const findings = generateAssessmentFindings(
       ruleExecution.findings,
       assessmentId
     );
 
-    // 8. Persist record with raw submission, translated result, authority map, and findings
+    // 9. Persist record with raw submission, translated result, snapshot, authority map, and findings
     const record: StoredAssuranceAssessment = {
       id: assessmentId,
       sourceHash,
@@ -87,15 +97,19 @@ export async function POST(req: Request) {
       schemaVersion: validation.data.schemaVersion,
       rawSubmission: rawText,
       result: translatedResult,
+      snapshotId: systemSnapshot.id,
+      systemSnapshot,
       authorityMap,
       findings
     };
 
     await saveAssuranceAssessment(record);
 
-    // 9. Return structured response adhering to response contract
+    // 10. Return structured response adhering to response contract
     return NextResponse.json({
       assessment_id: assessmentId,
+      system_id: systemId,
+      snapshot_id: systemSnapshot.id,
       assessment_level: translatedResult.assessment.level,
       status: translatedResult.assessment.status,
       source_hash: sourceHash,
@@ -104,6 +118,14 @@ export async function POST(req: Request) {
       evidence_claim_count: translatedResult.evidenceClaims.length,
       findings_count: findings.length,
       findings,
+      system_snapshot: {
+        id: systemSnapshot.id,
+        system_id: systemSnapshot.systemId,
+        source_version: systemSnapshot.sourceVersion,
+        config_hash: systemSnapshot.configHash,
+        captured_at: systemSnapshot.capturedAt,
+        authority_map_id: systemSnapshot.authorityMapId,
+      },
       authority_map: {
         node_count: authorityMap.nodes.length,
         edge_count: authorityMap.edges.length,
@@ -112,6 +134,8 @@ export async function POST(req: Request) {
       schema_version: validation.data.schemaVersion,
       // camelCase aliases for client convenience
       assessmentId,
+      systemId,
+      snapshotId: systemSnapshot.id,
       assessmentLevel: translatedResult.assessment.level,
       sourceHash,
       floorConditions: translatedResult.floorConditions,

@@ -42,3 +42,20 @@ export type {
 // Phase 3: Finding Generator
 export { generateAssessmentFindings } from './findings';
 export type { AssessmentFinding } from './findings';
+
+// Phase 4: Versioned System Identity & System Snapshots
+export { 
+  createSystemSnapshot,
+  createSystemSnapshotFromTrackD,
+  diffSystemSnapshots,
+  evaluateReassessmentTriggers
+} from './snapshots/index';
+export type {
+  SystemSnapshot,
+  SystemSnapshotDiff,
+  FieldDiff,
+  EdgeModification,
+  NodeModification,
+  ReassessmentTriggerCondition,
+  ReassessmentTriggerEvaluation
+} from './snapshots/index';

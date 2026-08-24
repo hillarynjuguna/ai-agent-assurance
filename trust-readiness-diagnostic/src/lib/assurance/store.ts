@@ -3,11 +3,12 @@ import path from "node:path";
 import type { TrackDImportResult } from "../../../../tools/track-d-governability-audit/adapter/src/assurance-types";
 import type { SeededAuthorityMap } from "../../../../tools/track-d-governability-audit/adapter/src/authority-map-seed";
 import type { AssessmentFinding } from "../../../../tools/track-d-governability-audit/adapter/src/findings";
+import type { SystemSnapshot } from "../../../../tools/track-d-governability-audit/adapter/src/snapshots/types";
 
 /**
  * Stored Assurance Assessment Record
  * Preserves raw submission, hash integrity, received timestamp, schema version,
- * translated Assurance domain representation, seeded Authority Map, and deterministic findings.
+ * translated Assurance domain representation, frozen SystemSnapshot, seeded Authority Map, and deterministic findings.
  */
 export interface StoredAssuranceAssessment {
   id: string;
@@ -16,6 +17,8 @@ export interface StoredAssuranceAssessment {
   schemaVersion: string;
   rawSubmission: string;
   result: TrackDImportResult;
+  snapshotId?: string;
+  systemSnapshot?: SystemSnapshot;
   authorityMap?: SeededAuthorityMap;
   findings?: AssessmentFinding[];
 }
