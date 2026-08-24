@@ -1,6 +1,7 @@
 # Agent Bootstrap: AI Agent Assurance
 
 > **Read this file first.** It tells you what exists, what's been decided, what's next, and how to verify your own work.
+> **Then read [`ROADMAP.md`](./ROADMAP.md)** for the full 6-phase development plan with acceptance criteria.
 
 ## 1. What This System Is
 
