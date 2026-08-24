@@ -145,3 +145,5 @@ These are logged but intentionally unresolved:
 3. **Multi-tenant model.** The schema has `organizations` and role-based access but no tenant isolation strategy for the assessment data. Relevant for SaaS but not for MVP.
 
 4. **Reassessment triggers.** Track D generates reassessment trigger conditions in the narrative. These are currently stored as text. Eventually they should be structured conditions that can fire automatically.
+
+5. **E3/E4 evidence level operational definitions.** The current definitions (E3 = "validated via CI/CD or monitoring", E4 = "adversarially tested by external party") risk conflating the *source* of evidence with the *nature* of validation. CI/CD output isn't automatically "validated" without knowing what test ran, against what version, under what conditions. External testing isn't automatically E4 merely because an external system ran it. Revisit these definitions when Phase 6 (reviewer workflow) makes E3/E4 submission a concrete operation, not before.
