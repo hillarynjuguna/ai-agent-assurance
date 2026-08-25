@@ -3,7 +3,7 @@
   "title": "ArchitectureExtractionOutput",
   "description": "Structured output for the LLM's ONLY job at this stage: turn uploaded intake material into candidate Authority Map nodes and edges. This schema has no field for evidence_level above E1 and no field for asserting a control is adequate, by design, so the model has no way to overreach even if prompted to.",
   "type": "object",
-  "required": ["nodes", "edges", "extraction_confidence", "unresolved_questions"],
+  "required": ["nodes", "edges", "extraction_confidence", "unresolved_questions", "contradictions"],
   "properties": {
     "nodes": {
       "type": "array",
@@ -46,6 +46,21 @@
       "type": "array",
       "items": { "type": "string" },
       "description": "Explicit list of what the source material did not answer. An empty array must be a deliberate claim, not an omission."
+    },
+    "contradictions": {
+      "type": "array",
+      "description": "Explicit source-material contradictions found during extraction.",
+      "items": {
+        "type": "object",
+        "required": ["subject", "source_a_excerpt", "source_b_excerpt", "status"],
+        "properties": {
+          "subject": { "type": "string" },
+          "source_a_excerpt": { "type": "string" },
+          "source_b_excerpt": { "type": "string" },
+          "status": { "enum": ["unresolved"] }
+        },
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": false

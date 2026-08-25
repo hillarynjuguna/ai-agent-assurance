@@ -59,3 +59,7 @@ export type {
   ReassessmentTriggerCondition,
   ReassessmentTriggerEvaluation
 } from './snapshots/index';
+
+// Phase 5: LLM-Assisted Extraction & Finding Drafts
+export * from './llm';
+

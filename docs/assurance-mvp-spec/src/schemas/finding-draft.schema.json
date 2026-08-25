@@ -3,7 +3,7 @@
   "title": "FindingDraftOutput",
   "description": "Structured output for the LLM's finding-drafting step. The evidence_level enum is deliberately restricted to E0/E1 only at the schema level, this is the concrete enforcement of 'the LLM cannot silently convert E0/E1 evidence into E2/E3/E4', it is not just a rule stated in a prompt.",
   "type": "object",
-  "required": ["findings"],
+  "required": ["findings", "contradictions", "unknowns"],
   "properties": {
     "findings": {
       "type": "array",
@@ -32,7 +32,8 @@
             "description": "Exactly one of node_id or edge_id, this finding must trace to something in the Authority Map, per the traceability invariant.",
             "properties": {
               "node_id": { "type": "string" },
-              "edge_id": { "type": "string" }
+              "edge_id": { "type": "string" },
+              "is_llm_proposed": { "type": "boolean" }
             }
           },
           "basis": {
@@ -46,6 +47,26 @@
         },
         "additionalProperties": false
       }
+    },
+    "contradictions": {
+      "type": "array",
+      "description": "Explicit contradictions found in source material. NOT resolved — surfaces for human reviewer.",
+      "items": {
+        "type": "object",
+        "required": ["subject", "source_a_excerpt", "source_b_excerpt", "status"],
+        "properties": {
+          "subject": { "type": "string" },
+          "source_a_excerpt": { "type": "string" },
+          "source_b_excerpt": { "type": "string" },
+          "status": { "enum": ["unresolved"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "description": "Things the LLM could not determine from source material. Explicitly preserves uncertainty.",
+      "items": { "type": "string" }
     }
   },
   "additionalProperties": false
