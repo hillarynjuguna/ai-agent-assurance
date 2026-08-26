@@ -279,6 +279,7 @@ LLM assistance is valuable *and* bounded. The system can demonstrate where AI he
 ---
 
 ## Phase 6: Reviewer Workflow + Report Pipeline
+**Status:** Complete for the bounded local MVP. See [`PHASE-6-IMPLEMENTATION-REPORT.md`](docs/assurance-mvp-spec/PHASE-6-IMPLEMENTATION-REPORT.md).
 **Goal:** A human reviewer can accept/reject findings, upgrade evidence, and produce a final report.
 **Effort:** ~10 hours
 **Dependencies:** Phase 5

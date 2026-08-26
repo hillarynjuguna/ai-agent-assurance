@@ -4,6 +4,7 @@ import type { TrackDImportResult } from "../../../../tools/track-d-governability
 import type { SeededAuthorityMap } from "../../../../tools/track-d-governability-audit/adapter/src/authority-map-seed";
 import type { AssessmentFinding } from "../../../../tools/track-d-governability-audit/adapter/src/findings";
 import type { SystemSnapshot } from "../../../../tools/track-d-governability-audit/adapter/src/snapshots/types";
+import type { Phase6State } from "./phase6-types";
 
 /**
  * Stored Assurance Assessment Record
@@ -21,6 +22,8 @@ export interface StoredAssuranceAssessment {
   systemSnapshot?: SystemSnapshot;
   authorityMap?: SeededAuthorityMap;
   findings?: AssessmentFinding[];
+  /** Phase 6 state is additive so historical Phase 1-5 records remain readable. */
+  phase6?: Phase6State;
 }
 
 const memoryStore = new Map<string, StoredAssuranceAssessment>();
@@ -128,6 +131,19 @@ export async function findAssessmentsByHash(sourceHash: string): Promise<StoredA
 /**
  * Clears storage (primarily for test isolation).
  */
+export async function updateAssuranceAssessment(
+  id: string,
+  updater: (record: StoredAssuranceAssessment) => StoredAssuranceAssessment | Promise<StoredAssuranceAssessment>,
+): Promise<StoredAssuranceAssessment> {
+  const current = await getAssuranceAssessment(id);
+  if (!current) {
+    throw new Error(`Assessment ${id} not found`);
+  }
+  const updated = await updater(current);
+  await saveAssuranceAssessment(updated);
+  return updated;
+}
+
 export async function clearStorageForTesting(): Promise<void> {
   memoryStore.clear();
   try {

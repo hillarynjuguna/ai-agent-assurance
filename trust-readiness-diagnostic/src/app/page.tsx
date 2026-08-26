@@ -84,6 +84,9 @@ export default function Home() {
       <div className="hero-section" style={{ animation: "fadeInDown 0.8s ease-out" }}>
         <h1 className="hero-heading">Can Your AI Agent Workflow Survive Outside Scrutiny?</h1>
         <div className="hero-sub">Check whether your agentic workflow is ready for payment processor review, investor diligence, insurer underwriting, enterprise clients, or regulators.</div>
+        <div style={{ textAlign: 'center', marginTop: '18px' }}>
+          <a href="/assurance" className="btn btn-outline">Open Assurance Reviewer Console</a>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ animationDelay: "0.1s" }}>
