@@ -2,12 +2,19 @@ import type { LlmArchitectureExtractionOutput, LlmFindingDraftOutput } from './t
 import type { LlmAdapter } from './adapter';
 import type { SeededAuthorityMap } from '../authority-map-seed';
 import type { SoftDimensionDraftBatch } from '../soft-dimensions';
+import {
+  parseAndValidateArchitectureExtraction,
+  parseAndValidateFindingDraft,
+} from './runtime-validate';
 
 export interface OpenAiCompatibleAdapterConfig {
   apiKey?: string;
   baseURL?: string; // e.g. "https://integrate.api.nvidia.com/v1" or "https://openrouter.ai/api/v1"
   model?: string;   // e.g. "meta/llama-3.3-70b-instruct" or "deepseek-ai/deepseek-r1"
   promptVersion?: string;
+  timeoutMs?: number;
+  maxRequestChars?: number;
+  maxResponseChars?: number;
 }
 
 /**
@@ -23,6 +30,9 @@ export class OpenAiCompatibleLlmAdapter implements LlmAdapter {
   readonly promptVersion: string;
   private readonly apiKey: string;
   private readonly baseURL: string;
+  private readonly timeoutMs: number;
+  private readonly maxRequestChars: number;
+  private readonly maxResponseChars: number;
 
   constructor(config: OpenAiCompatibleAdapterConfig = {}) {
     this.apiKey = config.apiKey || process.env.NVIDIA_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || '';
@@ -30,6 +40,9 @@ export class OpenAiCompatibleLlmAdapter implements LlmAdapter {
     this.modelId = config.model || process.env.NVIDIA_MODEL || 'meta/llama-3.3-70b-instruct';
     this.modelProvider = this.baseURL.includes('nvidia') ? 'nvidia' : 'openai-compatible';
     this.promptVersion = config.promptVersion || 'phase5-v1';
+    this.timeoutMs = config.timeoutMs ?? 30_000;
+    this.maxRequestChars = config.maxRequestChars ?? 100_000;
+    this.maxResponseChars = config.maxResponseChars ?? 100_000;
   }
 
   private async callChatCompletion(systemPrompt: string, userPrompt: string): Promise<string> {
@@ -37,36 +50,52 @@ export class OpenAiCompatibleLlmAdapter implements LlmAdapter {
       throw new Error(`API key is required for ${this.modelProvider} LLM adapter. Set NVIDIA_API_KEY, OPENROUTER_API_KEY, or GROQ_API_KEY.`);
     }
 
+    if (systemPrompt.length + userPrompt.length > this.maxRequestChars) {
+      throw new Error(`LLM request prompt exceeds maximum size of ${this.maxRequestChars} characters.`);
+    }
+
     const url = `${this.baseURL.replace(/\/$/, '')}/chat/completions`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: this.modelId,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.1,
-        response_format: { type: 'json_object' },
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.modelId,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.1,
+          response_format: { type: 'json_object' },
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`LLM API request failed (${response.status} ${response.statusText}): ${errorText}`);
+      if (!response.ok) {
+        const errorText = (await response.text()).slice(0, 2_000);
+        throw new Error(`LLM API request failed (${response.status} ${response.statusText}): ${errorText}`);
+      }
+
+      const data = await response.json() as any;
+      const content = data.choices?.[0]?.message?.content;
+      if (typeof content !== 'string' || content.trim().length === 0) {
+        throw new Error('LLM returned an empty response or invalid choices structure.');
+      }
+
+      return content;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`LLM API request timed out after ${this.timeoutMs}ms.`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = await response.json() as any;
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error('LLM returned an empty response or invalid choices structure.');
-    }
-
-    return content;
   }
 
   async extractArchitecture(
@@ -95,7 +124,7 @@ System Description: ${systemDescription}
 Authority Map Summary / Intake Source: ${authorityMapSummary}`;
 
     const rawJson = await this.callChatCompletion(systemPrompt, userPrompt);
-    return JSON.parse(rawJson) as LlmArchitectureExtractionOutput;
+    return parseAndValidateArchitectureExtraction(rawJson, this.maxResponseChars);
   }
 
   async draftFindings(
@@ -138,6 +167,6 @@ Existing Authority Map Edges: ${JSON.stringify(existingMap.edges.map(e => ({ id:
 Soft Dimensions Context: ${JSON.stringify(softDimensions.dimensions.map(d => ({ id: d.dimensionId, title: d.dimensionTitle, notes: d.auditorNotes, tags: d.regulatoryTags })))}`;
 
     const rawJson = await this.callChatCompletion(systemPrompt, userPrompt);
-    return JSON.parse(rawJson) as LlmFindingDraftOutput;
+    return parseAndValidateFindingDraft(rawJson, this.maxResponseChars);
   }
 }

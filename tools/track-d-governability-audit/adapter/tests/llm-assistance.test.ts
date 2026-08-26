@@ -18,6 +18,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { MockLlmAdapter } from '../src/llm/mock-adapter';
+import { OpenAiCompatibleLlmAdapter } from '../src/llm/openai-compatible-adapter';
+import {
+  LlmRuntimeValidationError,
+  parseAndValidateArchitectureExtraction,
+  parseAndValidateFindingDraft,
+} from '../src/llm/runtime-validate';
 import { validateLlmFindingDraft, validateLlmArchitectureExtraction, detectDeterministicConflicts } from '../src/llm/validate';
 import { runLlmAssessmentPass, compareAssessmentPaths } from '../src/llm/orchestrate';
 import type { SeededAuthorityMap } from '../src/authority-map-seed';
@@ -78,7 +84,137 @@ function makeEmptySoftDimensions(): SoftDimensionDraftBatch {
 const SNAPSHOT_ID = 'snapshot-test-001';
 
 // ---------------------------------------------------------------------------
-// 1. Schema validation — evidence level cap
+// 1. Runtime provider-response validation
+// ---------------------------------------------------------------------------
+
+describe('Phase 5.1: Runtime LLM Response Boundary', () => {
+  const validFindingDraft = {
+    findings: [{
+      title: 'A finding',
+      description: 'A source-grounded candidate finding.',
+      severity: 'medium',
+      confidence: 'moderate',
+      evidence_level: 'E1_documented',
+      framework_reference_code: 'ASI06',
+      authority_map_ref: { node_id: 'node-agent-SYN-01' },
+      basis: 'The source document states the relevant condition.',
+    }],
+    contradictions: [],
+    unknowns: [],
+  };
+
+  const validArchitectureExtraction = {
+    nodes: [{
+      temp_id: 'agent-1',
+      node_type: 'agent',
+      name: 'Test Agent',
+      source_excerpt: 'The source names the test agent.',
+    }],
+    edges: [],
+    extraction_confidence: 'moderate',
+    unresolved_questions: [],
+    contradictions: [],
+  };
+
+  it('rejects invalid JSON and oversized provider responses as structured runtime failures', () => {
+    assert.throws(
+      () => parseAndValidateFindingDraft('{broken json'),
+      (error: unknown) => error instanceof LlmRuntimeValidationError && error.errors.some(message => message.includes('invalid JSON')),
+    );
+    assert.throws(
+      () => parseAndValidateFindingDraft(JSON.stringify(validFindingDraft), 10),
+      (error: unknown) => error instanceof LlmRuntimeValidationError && error.errors.some(message => message.includes('maximum size')),
+    );
+  });
+
+  it('rejects malformed finding-draft structure before semantic validation', () => {
+    const missingFindings = { ...validFindingDraft, findings: undefined };
+    assert.throws(
+      () => parseAndValidateFindingDraft(JSON.stringify(missingFindings)),
+      (error: unknown) => error instanceof LlmRuntimeValidationError && error.errors.some(message => message.includes('findings must be an array')),
+    );
+
+    const invalidSeverity = {
+      ...validFindingDraft,
+      findings: [{ ...validFindingDraft.findings[0], severity: 'catastrophic' }],
+    };
+    assert.throws(
+      () => parseAndValidateFindingDraft(JSON.stringify(invalidSeverity)),
+      (error: unknown) => error instanceof LlmRuntimeValidationError && error.errors.some(message => message.includes('severity')),
+    );
+
+    const missingBasis = {
+      ...validFindingDraft,
+      findings: [{ ...validFindingDraft.findings[0], basis: undefined }],
+    };
+    assert.throws(
+      () => parseAndValidateFindingDraft(JSON.stringify(missingBasis)),
+      (error: unknown) => error instanceof LlmRuntimeValidationError && error.errors.some(message => message.includes('basis')),
+    );
+  });
+
+  it('rejects malformed architecture extraction structure before semantic validation', () => {
+    const invalidEdge = {
+      ...validArchitectureExtraction,
+      edges: [{
+        source_temp_id: 'agent-1',
+        target_temp_id: 'missing',
+        edge_type: 'calls',
+        permission_scope: 'test',
+        requires_human_approval: 'sometimes',
+        data_classification: null,
+        action_reversibility: null,
+        source_excerpt: 'The source describes a call.',
+      }],
+    };
+    assert.throws(
+      () => parseAndValidateArchitectureExtraction(JSON.stringify(invalidEdge)),
+      (error: unknown) => error instanceof LlmRuntimeValidationError && error.errors.some(message => message.includes('requires_human_approval')),
+    );
+  });
+
+  it('uses runtime validation on the actual OpenAI-compatible adapter path', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ findings: [] }) } }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } })) as typeof fetch;
+
+    try {
+      const adapter = new OpenAiCompatibleLlmAdapter({ apiKey: 'test-key', baseURL: 'https://example.test/v1' });
+      await assert.rejects(
+        () => adapter.extractArchitecture('SYN-01', 'description', 'summary', makeMinimalAuthorityMap()),
+        (error: unknown) => error instanceof LlmRuntimeValidationError && error.operation === 'architecture_extraction',
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('aborts a provider request that exceeds the configured timeout', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = ((_: string | URL | Request, init?: RequestInit) => new Promise<Response>((_, reject) => {
+      const signal = init?.signal;
+      if (signal?.aborted) {
+        reject(new DOMException('aborted', 'AbortError'));
+        return;
+      }
+      signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true });
+    })) as typeof fetch;
+
+    try {
+      const adapter = new OpenAiCompatibleLlmAdapter({ apiKey: 'test-key', timeoutMs: 5 });
+      await assert.rejects(
+        () => adapter.extractArchitecture('SYN-01', 'description', 'summary', makeMinimalAuthorityMap()),
+        /timed out after 5ms/,
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2. Schema validation — evidence level cap
 // ---------------------------------------------------------------------------
 
 describe('Phase 5: LLM Schema Validation', () => {

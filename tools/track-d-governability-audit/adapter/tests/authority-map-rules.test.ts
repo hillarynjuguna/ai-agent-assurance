@@ -333,6 +333,70 @@ describe('Phase 3: Authority Map & Deterministic Rules Engine', () => {
   // SECTION 5: Authority Map Seeding & Provenance Metadata
   // ============================================================
   describe('Authority Map Seeding from Track D', () => {
+    it('does not invent action, delegation, or model elements from score-only sparse input', () => {
+      const data = JSON.parse(loadFixture('sample-v61-export.json')) as Record<string, any>;
+      const dimensions = data.assessment.dimensions;
+      const notes = data.assessment.notes;
+      for (const id of ['1', '3', '5', '8', '10']) {
+        notes[id] = '';
+      }
+      dimensions['1'] = { cap: '0', evid: '0', na: 'false' };
+      dimensions['3'] = { cap: '1', evid: '0', na: 'false' };
+      dimensions['5'] = { cap: '0', evid: '0', na: 'false' };
+      dimensions['8'] = { cap: '1', evid: '0', na: 'false' };
+      dimensions['10'] = { cap: '0', evid: '0', na: 'false' };
+
+      const validation = validateTrackDExport(data);
+      assert.equal(validation.valid, true);
+      if (!validation.valid) throw new Error('Validation failed');
+
+      const authorityMap = seedAuthorityMapFromTrackD(validation.data, 'sparse-hash', 'sparse-system');
+      assert.equal(authorityMap.nodes.length, 1, 'Only the metadata-grounded agent node should exist');
+      assert.equal(authorityMap.edges.length, 0, 'Scores without source-described elements must not create edges');
+    });
+
+    it('preserves unknown approval and boundary state when an action is explicit but controls are ambiguous', () => {
+      const data = JSON.parse(loadFixture('sample-v61-export.json')) as Record<string, any>;
+      data.assessment.notes['1'] = 'The procurement API executes orders.';
+      data.assessment.notes['3'] = 'The approval arrangement is not documented.';
+      data.assessment.notes['10'] = 'Containment details are not documented.';
+      data.assessment.notes['5'] = 'Delegation boundaries are not documented.';
+      data.assessment.notes['8'] = 'Model governance information is incomplete.';
+      data.assessment.dimensions['1'] = { cap: '1', evid: '1', na: 'false' };
+      data.assessment.dimensions['3'] = { cap: '1', evid: '1', na: 'false' };
+      data.assessment.dimensions['10'] = { cap: '1', evid: '1', na: 'false' };
+
+      const validation = validateTrackDExport(data);
+      assert.equal(validation.valid, true);
+      if (!validation.valid) throw new Error('Validation failed');
+
+      const authorityMap = seedAuthorityMapFromTrackD(validation.data, 'ambiguous-hash', 'ambiguous-system');
+      const callEdge = authorityMap.edges.find(edge => edge.edgeType === 'calls');
+      assert.ok(callEdge);
+      assert.equal(callEdge!.actionReversibility, 'partially_reversible');
+      assert.equal(callEdge!.requiresHumanApproval, undefined);
+      assert.equal(callEdge!.trustBoundary, 'unknown');
+      assert.equal(authorityMap.nodes.filter(node => node.nodeType === 'external_agent').length, 0);
+      assert.equal(authorityMap.nodes.filter(node => node.nodeType === 'model').length, 0);
+    });
+
+    it('seeds elements when notes explicitly describe the action, delegation, and model', () => {
+      const data = JSON.parse(loadFixture('sample-v61-export.json')) as Record<string, any>;
+      data.assessment.notes['1'] = 'The procurement API executes irreversible orders.';
+      data.assessment.notes['5'] = 'The agent delegates tasks to a third-party MCP provider.';
+      data.assessment.notes['8'] = 'Uses GPT-4 Turbo via Azure OpenAI.';
+
+      const validation = validateTrackDExport(data);
+      assert.equal(validation.valid, true);
+      if (!validation.valid) throw new Error('Validation failed');
+
+      const authorityMap = seedAuthorityMapFromTrackD(validation.data, 'explicit-hash', 'explicit-system');
+      assert.ok(authorityMap.edges.some(edge => edge.edgeType === 'calls'));
+      assert.ok(authorityMap.edges.some(edge => edge.edgeType === 'delegates_to'));
+      assert.ok(authorityMap.nodes.some(node => node.nodeType === 'external_agent'));
+      assert.ok(authorityMap.nodes.some(node => node.nodeType === 'model'));
+    });
+
     it('seeds primary agent node, target action node, and calls edge with source provenance', () => {
       const rawJson = loadFixture('sample-v61-export.json');
       const validation = validateTrackDExport(JSON.parse(rawJson));
@@ -355,7 +419,7 @@ describe('Phase 3: Authority Map & Deterministic Rules Engine', () => {
       const callEdge = authorityMap.edges.find(e => e.edgeType === 'calls');
       assert.ok(callEdge);
       assert.equal(callEdge!.provenance?.source, 'track_d_export');
-      assert.equal(callEdge!.provenance?.derivationRule, 'd1_reversibility_and_d3_approval_to_edge');
+      assert.equal(callEdge!.provenance?.derivationRule, 'explicit_action_surface_with_d1_d3_d10_attributes_to_calls_edge');
     });
   });
 
@@ -381,8 +445,9 @@ describe('Phase 3: Authority Map & Deterministic Rules Engine', () => {
       // 3. Generate Findings
       const findings = generateAssessmentFindings(ruleResult.findings, asmtId);
 
-      // Weak fixture has D3 cap=0 (irreversible, no approval) and D10 cap=0 (uncontained external)
-      assert.ok(findings.length >= 2, `Expected at least 2 findings, got ${findings.length}`);
+      // D3 cap=0 establishes no approval; D10 cap=0 establishes missing containment
+      // but does not, by itself, establish an external trust boundary.
+      assert.equal(findings.length, 1, `Expected only the traceable Rule 1 finding, got ${findings.length}`);
 
       const rule1Finding = findings.find(f => f.frameworkRefs.includes('ASI01'));
       assert.ok(rule1Finding, 'Expected Rule 1 (ASI01) finding');
@@ -390,9 +455,7 @@ describe('Phase 3: Authority Map & Deterministic Rules Engine', () => {
       assert.equal(rule1Finding!.evidenceLevel, 'E1_documented');
 
       const rule4Finding = findings.find(f => f.frameworkRefs.includes('D10'));
-      assert.ok(rule4Finding, 'Expected Rule 4 (D10/ASI08) finding');
-      assert.equal(rule4Finding!.severity, 'high');
-      assert.equal(rule4Finding!.evidenceLevel, 'E1_documented');
+      assert.equal(rule4Finding, undefined, 'D10 score alone must not create an external-boundary finding');
 
       // Verify all findings trace to an authorityMapEdgeId or authorityMapNodeId
       for (const f of findings) {

@@ -333,6 +333,98 @@ describe('Phase 2: PostgreSQL Evidence Invariant Tests', () => {
   // SECTION 3: INSERT vs UPDATE Attack Vectors (Test 9-10)
   // ============================================================
   describe('INSERT vs UPDATE Bypass Attacks', () => {
+    it('Direct INSERT of an E1 finding with valid traceability is accepted', async () => {
+      const res = await ctx.db.query<{ id: string; evidence_level: string }>(
+        `INSERT INTO findings (
+           assessment_id, framework_reference_id, authority_map_edge_id,
+           title, description, severity, confidence, evidence_level, status, drafted_by
+         )
+         VALUES ($1, $2, $3, 'Documented Payment Action', 'Action is documented but not independently observed', 'high', 'moderate', 'E1_documented', 'open', 'operator')
+         RETURNING id, evidence_level`,
+        [ctx.assessmentId, ctx.frameworkRefId, ctx.edgeId]
+      );
+      assert.ok(res.rows[0].id);
+      assert.equal(res.rows[0].evidence_level, 'E1_documented');
+    });
+
+    it('Direct INSERT of an elevated finding with client-only/no evidence is rejected', async () => {
+      for (const level of ['E2_observed', 'E3_validated', 'E4_adversarially_tested']) {
+        await assert.rejects(
+          async () => {
+            await ctx.db.query(
+              `INSERT INTO findings (
+                 assessment_id, framework_reference_id, authority_map_edge_id,
+                 title, description, severity, confidence, evidence_level, status, drafted_by
+               )
+               VALUES ($1, $2, $3, 'Unjustified Elevated Finding', 'Must be blocked at the database boundary', 'critical', 'high', $4, 'open', 'attacker')`,
+              [ctx.assessmentId, ctx.frameworkRefId, ctx.edgeId, level]
+            );
+          },
+          new RegExp(`cannot be set to ${level} without qualifying reviewer or test_harness evidence`, 'i'),
+        );
+      }
+    });
+
+    it('Qualifying reviewer and test-harness evidence is accepted only through the intended E1-then-evidence-then-UPDATE workflow', async () => {
+      const reviewerFindingId = await createFinding('E1_documented');
+      await ctx.db.query(
+        `INSERT INTO evidence (finding_id, evidence_type, content_hash, storage_ref, supports_level, submitted_by_type, submitted_by_id)
+         VALUES ($1, 'log_excerpt', 'hash_direct_reviewer', 's3://evidence/direct-reviewer.json', 'E2_observed', 'reviewer', $2)`,
+        [reviewerFindingId, ctx.reviewerId]
+      );
+      const reviewerUpdate = await ctx.db.query<{ evidence_level: string }>(
+        `UPDATE findings SET evidence_level = 'E2_observed' WHERE id = $1 RETURNING evidence_level`,
+        [reviewerFindingId]
+      );
+      assert.equal(reviewerUpdate.rows[0].evidence_level, 'E2_observed');
+
+      const harnessFindingId = await createFinding('E1_documented');
+      await ctx.db.query(
+        `INSERT INTO evidence (finding_id, evidence_type, content_hash, storage_ref, supports_level, submitted_by_type)
+         VALUES ($1, 'test_result', 'hash_direct_harness', 's3://evidence/direct-harness.json', 'E4_adversarially_tested', 'test_harness')`,
+        [harnessFindingId]
+      );
+      const harnessUpdate = await ctx.db.query<{ evidence_level: string }>(
+        `UPDATE findings SET evidence_level = 'E4_adversarially_tested' WHERE id = $1 RETURNING evidence_level`,
+        [harnessFindingId]
+      );
+      assert.equal(harnessUpdate.rows[0].evidence_level, 'E4_adversarially_tested');
+    });
+
+    it('Evidence attached to a different assessment cannot qualify an elevation', async () => {
+      const findingAId = await createFinding('E1_documented');
+      await ctx.db.query(
+        `INSERT INTO evidence (finding_id, evidence_type, content_hash, storage_ref, supports_level, submitted_by_type, submitted_by_id)
+         VALUES ($1, 'log_excerpt', 'hash_cross_assessment', 's3://evidence/cross-assessment.json', 'E2_observed', 'reviewer', $2)`,
+        [findingAId, ctx.reviewerId]
+      );
+
+      const assessmentBRes = await ctx.db.query<{ id: string }>(
+        `INSERT INTO assessments (client_id, system_id, level, status, assigned_reviewer_id)
+         VALUES ($1, $2, 'L1_diagnostic', 'intake', $3) RETURNING id`,
+        [ctx.clientId, ctx.systemId, ctx.reviewerId]
+      );
+      const findingBRes = await ctx.db.query<{ id: string }>(
+        `INSERT INTO findings (
+           assessment_id, framework_reference_id, authority_map_edge_id,
+           title, description, severity, confidence, evidence_level, status, drafted_by
+         )
+         VALUES ($1, $2, $3, 'Cross Assessment Finding', 'Evidence from another assessment must not qualify this finding', 'high', 'moderate', 'E1_documented', 'open', 'operator')
+         RETURNING id`,
+        [assessmentBRes.rows[0].id, ctx.frameworkRefId, ctx.edgeId]
+      );
+
+      await assert.rejects(
+        async () => {
+          await ctx.db.query(
+            `UPDATE findings SET evidence_level = 'E2_observed' WHERE id = $1`,
+            [findingBRes.rows[0].id]
+          );
+        },
+        /cannot be set to E2_observed without qualifying reviewer or test_harness evidence/i,
+      );
+    });
+
     it('Test 9 (UPDATE attack) — Cannot bypass via sequential elevation (E1 -> E2 -> E3 -> E4)', async () => {
       const findingId = await createFinding('E1_documented');
 

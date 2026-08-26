@@ -169,6 +169,64 @@ describe('Track D v6.1 Validation', () => {
     assert.equal(result.valid, true);
   });
 
+  it('rejects non-canonical N/A flag values instead of coercing them to false', () => {
+    const malformedValues: unknown[] = ['yes', 'no', 'unknown', '', 'TRUE', 'FALSE', 1, true, false, null, undefined];
+
+    for (const malformed of malformedValues) {
+      const data = makeValidExport();
+      const assessment = data.assessment as Record<string, unknown>;
+      const dimensions = { ...(assessment.dimensions as Record<string, unknown>) };
+      dimensions['1'] = { cap: '2', evid: '1', na: malformed };
+      assessment.dimensions = dimensions;
+
+      const result = validateTrackDExport(data);
+      assert.equal(result.valid, false, `Expected malformed na=${String(malformed)} to be rejected`);
+      if (!result.valid) {
+        assert.ok(result.errors.some(error => error.includes('na')));
+      }
+    }
+  });
+
+  it('rejects partial, non-finite, and missing score strings when not N/A', () => {
+    const malformedScores = ['NaN', 'Infinity', '-Infinity', '2.5', '2abc', ''];
+
+    for (const score of malformedScores) {
+      const capData = makeValidExport();
+      const capAssessment = capData.assessment as Record<string, unknown>;
+      const capDimensions = { ...(capAssessment.dimensions as Record<string, unknown>) };
+      capDimensions['1'] = { cap: score, evid: '1', na: 'false' };
+      capAssessment.dimensions = capDimensions;
+      assert.equal(validateTrackDExport(capData).valid, false, `Expected cap=${score} to be rejected`);
+
+      const evidData = makeValidExport();
+      const evidAssessment = evidData.assessment as Record<string, unknown>;
+      const evidDimensions = { ...(evidAssessment.dimensions as Record<string, unknown>) };
+      evidDimensions['1'] = { cap: '2', evid: score, na: 'false' };
+      evidAssessment.dimensions = evidDimensions;
+      assert.equal(validateTrackDExport(evidData).valid, false, `Expected evid=${score} to be rejected`);
+    }
+  });
+
+  it('rejects non-finite diligence matrix numbers', () => {
+    for (const field of ['capabilityScore', 'assuranceScore', 'maxCapabilityScore', 'maxAssuranceScore', 'totalWeight']) {
+      const data = makeValidExport();
+      data.diligenceMatrix = {
+        ...(data.diligenceMatrix as Record<string, unknown>),
+        [field]: Number.NaN,
+      };
+      assert.equal(validateTrackDExport(data).valid, false, `Expected ${field}=NaN to be rejected`);
+    }
+  });
+
+  it('rejects non-string dimension notes', () => {
+    const data = makeValidExport();
+    const assessment = data.assessment as Record<string, unknown>;
+    assessment.notes = { ...(assessment.notes as Record<string, unknown>), '1': null };
+    const result = validateTrackDExport(data);
+    assert.equal(result.valid, false);
+    if (!result.valid) assert.ok(result.errors.some(error => error.includes('notes')));
+  });
+
   it('parses string dimension values into numbers', () => {
     const result = validateTrackDExport(makeValidExport());
     assert.equal(result.valid, true);

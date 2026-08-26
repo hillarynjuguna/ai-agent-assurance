@@ -116,7 +116,7 @@ export function seedAuthorityMapFromTrackD(
   const d10 = dimensions['10'];
   const d10Notes = (notes['10'] || '').toLowerCase();
   let trustBoundary: TrustBoundary = 'unknown';
-  let hasContainment = false;
+  let hasContainment: boolean | undefined = undefined;
 
   if (d10 && !d10.na) {
     if (d10Notes.includes('internal') || d10Notes.includes('vpc') || d10Notes.includes('isolated')) {
@@ -124,8 +124,14 @@ export function seedAuthorityMapFromTrackD(
       hasContainment = true;
     } else if (d10Notes.includes('partner') || d10Notes.includes('vendor')) {
       trustBoundary = 'partner';
-    } else if (d10.cap === 0 || d10Notes.includes('external') || d10Notes.includes('public') || d10Notes.includes('uncontained')) {
+    } else if (d10Notes.includes('external') || d10Notes.includes('public') || d10Notes.includes('uncontained')) {
+      // The boundary is external only when the source says so; a low score alone
+      // does not establish a network or organizational boundary.
       trustBoundary = 'external';
+      hasContainment = false;
+    } else if (d10.cap === 0 || d10Notes.includes('global access') || d10Notes.includes('unmetered spend') || d10Notes.includes('no architectural limits')) {
+      // D10=0 explicitly states that containment is absent, but it does not
+      // establish that the target is external.
       hasContainment = false;
     } else if (d10.cap >= 2) {
       hasContainment = true;
@@ -133,24 +139,29 @@ export function seedAuthorityMapFromTrackD(
   }
 
   // ------------------------------------------------------------
-  // Create Target Action/API Node & Edge if D1 or D3 or D10 has data
+  // Create a target Action/API Node & Edge only when the exported notes describe
+  // a concrete action surface. A score alone is not evidence that an endpoint,
+  // tool, or external action exists.
   // ------------------------------------------------------------
-  if (d1 && !d1.na) {
+  const actionSourceText = [d1Notes, d3Notes, d10Notes].join(' ');
+  const hasExplicitActionSurface = /\b(?:api|endpoint|tool|payment|order|charge|transaction|procurement|invoice|email|purchase|withdraw|delete|execute|write)\b/i.test(actionSourceText);
+  if (d1 && !d1.na && hasExplicitActionSurface) {
     const targetToolId = `node-tool-action-${systemId}`;
     nodes.push({
       id: targetToolId,
       nodeType: 'api',
-      name: 'External Action Endpoint',
-      metadata: {
-        containment: hasContainment,
-        d10Score: d10 ? d10.cap : null
-      },
-      provenance: {
-        source: 'track_d_export',
-        dimension: 'D10',
-        field: 'cap',
-        value: d10 ? d10.cap.toString() : 'na',
-        derivationRule: 'd10_containment_to_tool_metadata'
+        name: 'Action Endpoint described in Track D',
+        metadata: {
+          ...(hasContainment === undefined ? {} : { containment: hasContainment }),
+          d10Score: d10 ? d10.cap : null,
+          sourceDescription: actionSourceText.trim()
+        },
+        provenance: {
+          source: 'track_d_export',
+          dimension: 'D1/D3/D10',
+          field: 'notes',
+          value: actionSourceText.trim(),
+          derivationRule: 'explicit_action_surface_notes_to_action_node'
       }
     });
 
@@ -160,16 +171,16 @@ export function seedAuthorityMapFromTrackD(
       targetNodeId: targetToolId,
       edgeType: 'calls',
       actionReversibility: actionReversibility === 'unknown' ? undefined : actionReversibility,
-      requiresHumanApproval: requiresHumanApproval ?? false, // preserved as false when cap=0
+      requiresHumanApproval, // undefined remains unknown when the export is ambiguous
       trustBoundary: trustBoundary,
       permissionScope: 'action:execute',
       description: notes['1'] || notes['3'] || notes['10'] || 'Agent automated action execution',
       provenance: {
         source: 'track_d_export',
-        dimension: 'D1/D3',
-        field: 'cap',
-        value: `D1_cap=${d1.cap};D3_cap=${d3?.cap ?? 'na'}`,
-        derivationRule: 'd1_reversibility_and_d3_approval_to_edge'
+        dimension: 'D1/D3/D10',
+        field: 'notes',
+        value: actionSourceText.trim(),
+        derivationRule: 'explicit_action_surface_with_d1_d3_d10_attributes_to_calls_edge'
       }
     });
   }
@@ -181,11 +192,9 @@ export function seedAuthorityMapFromTrackD(
   const d5 = dimensions['5'];
   const d5Notes = (notes['5'] || '').toLowerCase();
   if (d5 && !d5.na) {
-    const isExternalDelegation = d5.cap === 0 || 
-                                 d5Notes.includes('external') || 
-                                 d5Notes.includes('sub-agent') || 
-                                 d5Notes.includes('third-party') || 
-                                 d5Notes.includes('mcp');
+    const explicitlyNoDelegation = /\b(?:no|not|without)\s+(?:downstream\s+)?delegat(?:ion|e)|does\s+not\s+delegate\b/i.test(d5Notes);
+    const isExternalDelegation = !explicitlyNoDelegation &&
+                                 /\b(?:external\s+(?:agent|sub-agent|provider)|sub-agent|third-party|mcp)\b/i.test(d5Notes);
 
     if (isExternalDelegation) {
       const subAgentNodeId = `node-external-agent-${systemId}`;
@@ -232,7 +241,8 @@ export function seedAuthorityMapFromTrackD(
   // ------------------------------------------------------------
   const d8 = dimensions['8'];
   const d8Notes = notes['8'] || '';
-  if (d8 && !d8.na && d8Notes.trim().length > 0) {
+  const hasNamedModel = /\b(?:gpt[- ]?\d|claude|gemini|llama|mistral|command|azure\s+openai|openai|anthropic|google\s+vertex|model\s+(?:family|version|name))\b/i.test(d8Notes);
+  if (d8 && !d8.na && hasNamedModel) {
     const modelNodeId = `node-model-${systemId}`;
     nodes.push({
       id: modelNodeId,

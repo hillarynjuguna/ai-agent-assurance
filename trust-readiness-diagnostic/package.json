@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --import ../tools/track-d-governability-audit/adapter/node_modules/tsx/dist/loader.mjs --test tests/*.test.ts",
     "lint": "eslint"
   },
   "dependencies": {

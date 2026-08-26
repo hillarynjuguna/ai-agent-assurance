@@ -23,7 +23,8 @@ export interface AuthorityMapEdgeInput {
   targetNodeId: string;
   edgeType: AuthorityEdgeType;
   actionReversibility?: Reversibility;
-  requiresHumanApproval: boolean;
+  /** undefined means the source did not establish whether approval is required. */
+  requiresHumanApproval: boolean | undefined;
   trustBoundary: TrustBoundary;
   permissionScope: string;
   description?: string;

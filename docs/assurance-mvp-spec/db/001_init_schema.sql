@@ -223,7 +223,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_evidence_integrity
+-- Apply the same invariant to both creation and escalation. An elevated finding
+-- cannot be inserted first and justified later; the normal workflow creates the
+-- finding at E0/E1, attaches evidence, then performs an audited UPDATE.
+DROP TRIGGER IF EXISTS trg_evidence_integrity ON findings;
+DROP TRIGGER IF EXISTS trg_evidence_integrity_insert ON findings;
+DROP TRIGGER IF EXISTS trg_evidence_integrity_update ON findings;
+
+CREATE TRIGGER trg_evidence_integrity_insert
+    BEFORE INSERT ON findings
+    FOR EACH ROW
+    EXECUTE FUNCTION enforce_evidence_integrity();
+
+CREATE TRIGGER trg_evidence_integrity_update
     BEFORE UPDATE OF evidence_level ON findings
     FOR EACH ROW
     WHEN (NEW.evidence_level IS DISTINCT FROM OLD.evidence_level)

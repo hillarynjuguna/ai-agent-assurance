@@ -77,6 +77,11 @@ export async function POST(req: Request) {
       systemId
     );
 
+    // Phase 5.1 boundary decision: intake is intentionally deterministic-only.
+    // The API contract places LLM-assisted drafting after a reviewed Authority Map
+    // is committed through the separate diagnostics/run operation; this route must
+    // not let an LLM alter intake findings or Authority Map state.
+
     // 7. Phase 3: Execute deterministic rules against Authority Map structure
     const ruleExecution = executeDeterministicRules(
       authorityMap.edges,

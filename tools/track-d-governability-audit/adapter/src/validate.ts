@@ -42,29 +42,48 @@ export function validateTrackDExport(data: any): { valid: true; data: ValidatedT
         if (!dim) {
           errors.push(`assessment.dimensions["${i}"] is missing`);
         } else {
+          if (!dim || typeof dim !== 'object' || Array.isArray(dim)) {
+            errors.push(`assessment.dimensions["${i}"] must be an object`);
+            continue;
+          }
+
           if (typeof dim.cap !== 'string') errors.push(`assessment.dimensions["${i}"].cap must be a string`);
           if (typeof dim.evid !== 'string') errors.push(`assessment.dimensions["${i}"].evid must be a string`);
-          if (typeof dim.na !== 'string') errors.push(`assessment.dimensions["${i}"].na must be a string`);
-          
-          if (dim.na === 'false') {
-            const capNum = parseInt(dim.cap, 10);
-            const evidNum = parseInt(dim.evid, 10);
-            if (isNaN(capNum) || capNum < 0 || capNum > 3) {
-              errors.push(`assessment.dimensions["${i}"].cap must parse to 0-3 when not NA`);
+          if (typeof dim.na !== 'string') {
+            errors.push(`assessment.dimensions["${i}"].na must be a string`);
+          } else if (dim.na !== 'true' && dim.na !== 'false') {
+            errors.push(`assessment.dimensions["${i}"].na must be exactly "true" or "false"`);
+          } else if (dim.na === 'false') {
+            if (typeof dim.cap !== 'string' || !/^(?:0|[1-3])$/.test(dim.cap)) {
+              errors.push(`assessment.dimensions["${i}"].cap must be a canonical string score from 0-3 when not NA`);
             }
-            if (isNaN(evidNum) || evidNum < 0 || evidNum > 4) {
-              errors.push(`assessment.dimensions["${i}"].evid must parse to 0-4 when not NA`);
+            if (typeof dim.evid !== 'string' || !/^(?:0|[1-4])$/.test(dim.evid)) {
+              errors.push(`assessment.dimensions["${i}"].evid must be a canonical string score from 0-4 when not NA`);
+            }
+          } else {
+            // The HTML export resets both hidden score fields to the canonical -1 sentinel.
+            if (dim.cap !== '-1') {
+              errors.push(`assessment.dimensions["${i}"].cap must be "-1" when NA`);
+            }
+            if (dim.evid !== '-1') {
+              errors.push(`assessment.dimensions["${i}"].evid must be "-1" when NA`);
             }
           }
         }
       }
     }
 
-    if (!notes || typeof notes !== 'object') {
+    if (!notes || typeof notes !== 'object' || Array.isArray(notes)) {
       errors.push('assessment.notes is missing or not an object');
+    } else {
+      for (const [dimensionId, note] of Object.entries(notes)) {
+        if (typeof note !== 'string') {
+          errors.push(`assessment.notes["${dimensionId}"] must be a string`);
+        }
+      }
     }
 
-    if (!summary || typeof summary !== 'object' || typeof summary.actions !== 'string') {
+    if (!summary || typeof summary !== 'object' || Array.isArray(summary) || typeof summary.actions !== 'string') {
       errors.push('assessment.summary.actions must be a string');
     }
   }
@@ -73,16 +92,16 @@ export function validateTrackDExport(data: any): { valid: true; data: ValidatedT
     errors.push('diligenceMatrix is missing or not an object');
   } else {
     const dm = data.diligenceMatrix;
-    if (dm.capabilityScore !== null && typeof dm.capabilityScore !== 'number') {
-      errors.push('diligenceMatrix.capabilityScore must be number or null');
+    if (dm.capabilityScore !== null && (typeof dm.capabilityScore !== 'number' || !Number.isFinite(dm.capabilityScore))) {
+      errors.push('diligenceMatrix.capabilityScore must be a finite number or null');
     }
-    if (dm.assuranceScore !== null && typeof dm.assuranceScore !== 'number') {
-      errors.push('diligenceMatrix.assuranceScore must be number or null');
+    if (dm.assuranceScore !== null && (typeof dm.assuranceScore !== 'number' || !Number.isFinite(dm.assuranceScore))) {
+      errors.push('diligenceMatrix.assuranceScore must be a finite number or null');
     }
     if (typeof dm.quadrant !== 'string') errors.push('diligenceMatrix.quadrant must be a string');
-    if (typeof dm.maxCapabilityScore !== 'number') errors.push('diligenceMatrix.maxCapabilityScore must be a number');
-    if (typeof dm.maxAssuranceScore !== 'number') errors.push('diligenceMatrix.maxAssuranceScore must be a number');
-    if (typeof dm.totalWeight !== 'number') errors.push('diligenceMatrix.totalWeight must be a number');
+    if (typeof dm.maxCapabilityScore !== 'number' || !Number.isFinite(dm.maxCapabilityScore)) errors.push('diligenceMatrix.maxCapabilityScore must be a finite number');
+    if (typeof dm.maxAssuranceScore !== 'number' || !Number.isFinite(dm.maxAssuranceScore)) errors.push('diligenceMatrix.maxAssuranceScore must be a finite number');
+    if (typeof dm.totalWeight !== 'number' || !Number.isFinite(dm.totalWeight)) errors.push('diligenceMatrix.totalWeight must be a finite number');
   }
 
   if (!data.narrative || typeof data.narrative !== 'object') {
