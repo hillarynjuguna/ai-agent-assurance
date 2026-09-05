@@ -68,6 +68,7 @@ export * from './reviewer/types';
 export { getServerReviewerSession } from './reviewer/session';
 export { applyReviewDecision, applyContradictionDecision, createReviewDecision } from './reviewer/engine';
 export { compileCanonicalAssessment, canonicalizeJson, attestAssessment } from './report/compiler';
+export { renderAssessmentMarkdown } from './report/markdown';
 export type {
   EvidenceSourceType,
   CollectionMethodType,
