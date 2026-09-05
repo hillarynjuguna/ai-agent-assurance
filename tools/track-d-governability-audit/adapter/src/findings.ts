@@ -1,4 +1,5 @@
-import { CandidateFinding, FindingSeverity, FindingConfidence, EvidenceLevel } from './rules/types';
+import { CandidateFinding, FindingSeverity, FindingConfidence } from './rules/types';
+import type { EvidenceLevel } from './assurance-types';
 import type { FindingDisposition } from './reviewer/types';
 
 export interface AssessmentFinding {

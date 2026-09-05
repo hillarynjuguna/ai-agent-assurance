@@ -66,6 +66,7 @@ export * from './llm';
 // Phase 6: Human Assurance Decision Layer & Epistemic Evidence
 export * from './reviewer/types';
 export { getServerReviewerSession } from './reviewer/session';
+export { applyReviewDecision, applyContradictionDecision, createReviewDecision } from './reviewer/engine';
 export type {
   EvidenceSourceType,
   CollectionMethodType,
