@@ -1,0 +1,126 @@
+{
+  "systemId": "SME-OPS-01",
+  "systemName": "SME Customer Operations & Support Agent",
+  "version": "2.3.0",
+  "organization": "QuickMerch Global SME",
+  "capturedAt": "2026-09-05T12:00:00Z",
+  "artifacts": {
+    "architecture_spec_v1": {
+      "version": "1.0.0",
+      "date": "2025-11-10",
+      "status": "stale_policy",
+      "content": "SECURITY & OPERATIONAL SPECIFICATION (v1.0.0):\n1. All customer refunds, regardless of amount, require explicit human authorization via the Slack #refund-approvals channel.\n2. The customer support agent interacts with CRM via scoped tokens restricted to ticket retrieval and internal notes appending ('crm:tickets:read', 'crm:notes:write').\n3. The agent must never write to customer profile contact details (email, phone, billing address).\n4. All external emails sent to customers must use pre-approved template IDs."
+    },
+    "current_tool_config_v2": {
+      "version": "2.3.0",
+      "date": "2026-08-15",
+      "status": "active_runtime_config",
+      "tools": {
+        "stripe_refund_tool": {
+          "endpoint": "https://api.stripe.com/v1/refunds",
+          "requires_human_approval": false,
+          "max_autonomous_amount_usd": 50.00,
+          "action_reversibility": "irreversible",
+          "trust_boundary": "external"
+        },
+        "hubspot_crm_tool": {
+          "endpoint": "https://api.hubapi.com/crm/v3",
+          "api_token_scopes": ["crm:contacts:read", "crm:contacts:write", "crm:tickets:read", "crm:tickets:write", "crm:orders:read"],
+          "actual_permissions": "full_contact_write_enabled",
+          "trust_boundary": "external"
+        },
+        "sendgrid_email_tool": {
+          "endpoint": "https://api.sendgrid.com/v3/mail/send",
+          "requires_human_approval": false,
+          "action_reversibility": "irreversible",
+          "trust_boundary": "external"
+        }
+      }
+    },
+    "approval_webhook_config": {
+      "endpoint": "https://n8n.internal.quickmerch.com/webhook/refund-approval",
+      "timeout_ms": 0,
+      "timeout_behavior": "default_action_approve",
+      "notes": "Emergency fail-open fallback implemented to prevent support ticket queues backing up during Slack API outages."
+    },
+    "runtime_telemetry_logs": [
+      {
+        "timestamp": "2026-09-02T14:10:02Z",
+        "ticket_id": "TICK-8841",
+        "action": "stripe_refund_tool.create_refund",
+        "params": { "amount_usd": 48.50, "currency": "USD", "reason": "damaged_goods" },
+        "human_approval_required": false,
+        "approval_id": null,
+        "status": "success",
+        "recipient_email": "customer-inbound@attacker-controlled-inbox.net"
+      },
+      {
+        "timestamp": "2026-09-02T14:11:32Z",
+        "ticket_id": "TICK-8842",
+        "action": "stripe_refund_tool.create_refund",
+        "params": { "amount_usd": 48.50, "currency": "USD", "reason": "duplicate_item" },
+        "human_approval_required": false,
+        "approval_id": null,
+        "status": "success",
+        "recipient_email": "customer-inbound@attacker-controlled-inbox.net"
+      }
+    ]
+  },
+  "track_d_self_assessment": {
+    "schemaVersion": "6.1.0",
+    "schemaName": "Governability Diagnostic Protocol",
+    "generatedAt": "2026-09-05T10:00:00Z",
+    "assessment": {
+      "metadata": {
+        "criticality": "financial",
+        "audience": "investor",
+        "company": "QuickMerch Global SME",
+        "assessor": "CTO / Lead Developer",
+        "confidence": "high",
+        "date": "2026-09-05",
+        "valid": "2026-12-05"
+      },
+      "dimensions": {
+        "1": { "cap": "2", "evid": "2", "na": "false" },
+        "2": { "cap": "2", "evid": "1", "na": "false" },
+        "3": { "cap": "3", "evid": "2", "na": "false" },
+        "4": { "cap": "1", "evid": "0", "na": "false" },
+        "5": { "cap": "1", "evid": "0", "na": "false" },
+        "6": { "cap": "1", "evid": "0", "na": "false" },
+        "7": { "cap": "1", "evid": "0", "na": "false" },
+        "8": { "cap": "2", "evid": "1", "na": "false" },
+        "9": { "cap": "1", "evid": "0", "na": "false" },
+        "10": { "cap": "1", "evid": "1", "na": "false" }
+      },
+      "notes": {
+        "1": "Refunds are processed through Stripe; chargebacks and partial reversals are theoretically supported by processor.",
+        "3": "All sensitive actions require Slack manager signoff before execution.",
+        "5": "Agent only calls documented internal tools and partner APIs with scoped keys.",
+        "10": "Rate limiting applied at the API gateway layer."
+      },
+      "summary": {
+        "actions": "Deploy autonomous customer support agent to production."
+      }
+    },
+    "diligenceMatrix": {
+      "capabilityScore": 55,
+      "assuranceScore": 25,
+      "quadrant": "risk",
+      "maxCapabilityScore": 84,
+      "maxAssuranceScore": 112,
+      "totalWeight": 28
+    },
+    "narrative": {
+      "confidenceStatement": "Client asserts adequate human oversight and controlled financial actions.",
+      "priorityGaps": "Behavioral verification and incident response unverified.",
+      "relianceRecommendation": "CONDITIONAL RELIANCE",
+      "relianceRationale": "Requires verification that human approval modal is enforced for refund and email dispatch.",
+      "reassessmentTriggers": "Any modification to refund approval threshold or CRM API scope."
+    },
+    "floorRulesTriggered": [],
+    "regulatoryMapping": {
+      "D1": { "title": "Reversibility", "tags": ["ASI01"] },
+      "D3": { "title": "Human Override", "tags": ["ASI01"] }
+    }
+  }
+}
