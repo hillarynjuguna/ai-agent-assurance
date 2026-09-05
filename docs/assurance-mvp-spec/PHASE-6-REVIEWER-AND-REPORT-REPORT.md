@@ -134,8 +134,22 @@ Every finding in the Canonical Assessment and final report presents five distinc
 - [x] **AC-20:** Reviewer decisions form an append-only audit trail (`tests/decision-engine.test.ts`).
 - [x] **AC-21:** Full regression suite passes: 165/165 tests passing across 57 suites with clean typecheck and build (`npm test`, `npm run build`).
 
+## 7. Provenance Reconstruction & Data Model Integrity
+
+Starting from any final finding, the reference chain traces backwards through persisted identifiers:
+$$\text{Final Finding} \xrightarrow{} \text{Review Decision} \xrightarrow{} \text{Evidence Record} \xrightarrow{} \text{Authority Map Edge} \xrightarrow{} \text{System Snapshot} \xrightarrow{} \text{Source Hash / Raw Input}$$
+
+1. **Finding → Decision:** `finding.decisionId` references `reviewDecision.id` in `reviewDecisions[]`.
+2. **Decision → Evidence:** `reviewDecision.evidenceId` references `epistemicEvidence.id` in `evidenceLedger[]`.
+3. **Evidence → Authority Map Element:** `finding.authorityMapEdgeId` links directly to `authorityMap.edges[].id`.
+4. **Authority Map Element → System Snapshot:** `authorityMap.derivedAt` and `authorityMap.sourceArtifactHash` match `systemSnapshot.configHash`.
+5. **System Snapshot → Original Raw Input:** `systemSnapshot.configHash` matches `selfAssessmentContext.sourceArtifactHash` and SHA-256 of raw intake JSON.
+
+> **Epistemic Finding:** No provenance gaps were identified within the tested Phase 6 data model and synthetic scenarios.
+
 ---
 
-## 7. Conclusion & Roadmap Completion
+## 8. Conclusion & Roadmap Completion
 
 Phase 6 completes the entire MVP scope defined in `ROADMAP.md`. The repository now contains a complete, verified, evidence-aware assurance engine that bridges self-assessment intake, versioned snapshot identity, deterministic authority graph rules, bounded LLM interpretation, human reviewer oversight, and cryptographic attestation into a single provenance-preserving architecture.
+
