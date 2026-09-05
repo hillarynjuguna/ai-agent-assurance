@@ -34,13 +34,16 @@ The v6.1 `exportJSON()` produces string values from DOM elements (`cap: "2"`, `e
 ## 3. What Exists and Works
 
 ### Adapter Module (`tools/track-d-governability-audit/adapter/`)
-- **38/38 tests passing** — run with `npm test`
+- **165/165 tests passing across 57 suites** — run with `npm test`
 - **TypeScript strict mode** — verify with `npm run typecheck`
 - Core pipeline: `validate.ts` → `hash.ts` → `translate.ts`
+- Authority Map seeder: `authority-map-seed.ts` (with provenance tracking)
 - Deterministic rules: Rules 1-4 in `src/rules/`
-- Soft dimension routing: `soft-dimensions.ts` (D4/D6/D7/D8/D9 → LLM finding-draft)
-- Report section: `report-context.ts` with provenance disclaimer + markdown renderer
-- Schema: `db/002_track_d_intake.sql` extends the base schema
+- System Snapshot engine: `snapshots/` (Option A identity policy, diff detection, triggers)
+- LLM assistance layer: `llm/` (schema validation, E1 cap, conflict detection, orchestration)
+- Human decision layer: `reviewer/` (server-side session boundary, decision engine, provenance-preserving overrides)
+- Report pipeline: `report/` (canonical JSON compilation, SHA-256 attestation, 5-layer deterministic markdown projection)
+- Schema migrations: `001_init_schema.sql`, `002_track_d_intake.sql`, `003_system_snapshots.sql`
 
 ### Track D v6.1 HTML (`tools/track-d-governability-audit/Governability-Diagnostic-Protocol.html`)
 - Self-contained single-file diagnostic UI
