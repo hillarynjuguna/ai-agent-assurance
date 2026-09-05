@@ -63,3 +63,13 @@ export type {
 // Phase 5: LLM-Assisted Extraction & Finding Drafts
 export * from './llm';
 
+// Phase 6: Human Assurance Decision Layer & Epistemic Evidence
+export * from './reviewer/types';
+export type {
+  EvidenceSourceType,
+  CollectionMethodType,
+  ValidationTestRecord,
+  AdversarialTestRecord,
+  EpistemicEvidenceRecord
+} from './assurance-types';
+

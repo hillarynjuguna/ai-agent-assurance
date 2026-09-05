@@ -67,3 +67,48 @@ export interface TrackDImportResult {
     rawJson: string;
   };
 }
+
+/**
+ * Phase 6 Epistemic Evidence Types
+ * Separates what happened epistemically (evidence level) from who/how it was collected.
+ */
+export type EvidenceSourceType = 'client' | 'system' | 'reviewer' | 'authorized_tester';
+export type CollectionMethodType = 'manual_upload' | 'automated_telemetry' | 'controlled_test' | 'adversarial_test';
+
+export interface ValidationTestRecord {
+  testId: string;
+  objective: string;
+  preconditions?: string;
+  steps: string[];
+  inputs?: Record<string, unknown>;
+  expectedResult: string;
+  observedResult: string;
+  environment: 'sandbox' | 'staging' | 'production' | 'simulated';
+  testerIdentity: string;
+  timestamp: string;
+  outcome: 'pass' | 'fail' | 'indeterminate';
+  artifacts?: Array<{ name: string; hash: string; uri?: string }>;
+}
+
+export interface AdversarialTestRecord extends ValidationTestRecord {
+  authorizationScope: string;
+  attackClass: string;
+  payloadMethod: string;
+}
+
+export interface EpistemicEvidenceRecord {
+  id: string;
+  findingId: string;
+  supportsLevel: EvidenceLevel;
+  evidenceType: EvidenceType;
+  content: string;
+  contentHash: string;
+  source: EvidenceSourceType;
+  collector: string;
+  collectionMethod: CollectionMethodType;
+  collectedAt: string;
+  validationTest?: ValidationTestRecord;
+  adversarialTest?: AdversarialTestRecord;
+  supersededBy?: string;
+}
+

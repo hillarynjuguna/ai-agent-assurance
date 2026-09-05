@@ -1,4 +1,5 @@
 import { CandidateFinding, FindingSeverity, FindingConfidence, EvidenceLevel } from './rules/types';
+import type { FindingDisposition } from './reviewer/types';
 
 export interface AssessmentFinding {
   id: string;
@@ -10,11 +11,17 @@ export interface AssessmentFinding {
   description: string;
   basis: string;
   severity: FindingSeverity;
+  baselineSeverity: FindingSeverity;
+  effectiveSeverity: FindingSeverity;
+  disposition: FindingDisposition;
+  overrideReason?: string;
+  decisionId?: string;
   confidence: FindingConfidence;
   evidenceLevel: EvidenceLevel;
   status: 'open' | 'acknowledged' | 'remediated' | 'accepted_risk';
-  draftedBy: 'deterministic_rule_engine';
+  draftedBy: 'deterministic_rule_engine' | string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -23,6 +30,7 @@ export interface AssessmentFinding {
  * Invariants Enforced:
  * - Invariant 1: Claim != Evidence. Finding evidence_level is strictly capped at E1_documented.
  * - Invariant 8: Traceability. Every finding is linked to an Authority Map node or edge ID.
+ * - Provenance Invariant: baselineSeverity remains immutable; effectiveSeverity starts equal to baseline with 'unresolved' disposition.
  * - No composite scoring or severity dilution.
  */
 export function generateAssessmentFindings(
@@ -45,6 +53,11 @@ export function generateAssessmentFindings(
       description: cf.description,
       basis: cf.basis,
       severity: cf.severity,
+      baselineSeverity: cf.severity,
+      effectiveSeverity: cf.severity,
+      disposition: 'unresolved',
+      overrideReason: undefined,
+      decisionId: undefined,
       confidence: cf.confidence,
       // Strictly capped at E1_documented during automated diagnostics
       evidenceLevel: cf.evidenceLevel === 'E0_claimed' ? 'E0_claimed' : 'E1_documented',
