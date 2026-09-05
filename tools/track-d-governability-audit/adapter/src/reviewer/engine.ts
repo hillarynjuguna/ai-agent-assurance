@@ -41,11 +41,11 @@ export function applyReviewDecision(
   };
 
   // Evidence Upgrade Invariant Check (Mirrors Phase 2 SQL triggers)
-  if (decision.decisionType === 'upgrade_evidence') {
-    if (!decision.newEvidence) {
-      throw new Error(`ReviewDecision ${decision.id} with type upgrade_evidence must supply newEvidence.`);
-    }
+  if (decision.decisionType === 'upgrade_evidence' && !decision.newEvidence) {
+    throw new Error(`ReviewDecision ${decision.id} with type upgrade_evidence must supply newEvidence.`);
+  }
 
+  if (decision.newEvidence) {
     const newEvidence = decision.newEvidence;
     const targetLevel = newEvidence.supportsLevel;
 

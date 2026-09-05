@@ -155,6 +155,33 @@ export function renderAssessmentMarkdown(
     for (const ev of canonical.evidenceLedger) {
       lines.push(`| \`${ev.id}\` | \`${ev.findingId}\` | \`${ev.supportsLevel}\` | \`${ev.evidenceType}\` | \`${ev.source}\` | \`${ev.collector}\` | \`${ev.collectionMethod}\` | \`${ev.contentHash.substring(0, 16)}...\` |`);
     }
+    lines.push('');
+
+    // Detailed Test Verification Records for E3 / E4
+    for (const ev of canonical.evidenceLedger) {
+      if (ev.validationTest) {
+        const vt = ev.validationTest;
+        lines.push(`### Test Record: \`${vt.testId}\` (Evidence \`${ev.id}\`)`);
+        lines.push(`- **Objective:** ${vt.objective}`);
+        lines.push(`- **Environment:** \`${vt.environment}\` | **Tester:** \`${vt.testerIdentity}\` | **Outcome:** \`${vt.outcome}\``);
+        lines.push(`- **Steps:**`);
+        for (const s of vt.steps) {
+          lines.push(`  1. ${s}`);
+        }
+        lines.push(`- **Expected Result:** ${vt.expectedResult}`);
+        lines.push(`- **Observed Result:** ${vt.observedResult}`);
+        lines.push('');
+      }
+
+      if (ev.adversarialTest) {
+        const at = ev.adversarialTest;
+        lines.push(`### Adversarial Attack Record: \`${at.testId}\` (Evidence \`${ev.id}\`)`);
+        lines.push(`- **Authorization Scope:** \`${at.authorizationScope}\``);
+        lines.push(`- **Attack Class:** \`${at.attackClass}\``);
+        lines.push(`- **Payload Method:** ${at.payloadMethod}`);
+        lines.push('');
+      }
+    }
   }
   lines.push('');
 

@@ -148,7 +148,7 @@ export function compileCanonicalAssessment(params: CompileCanonicalParams): Cano
   }
 
   for (const dec of reviewDecisions) {
-    if (dec.decisionType === 'upgrade_evidence') {
+    if (dec.decisionType === 'upgrade_evidence' || dec.newEvidence !== undefined) {
       evidenceUpgradesCount++;
     }
   }
