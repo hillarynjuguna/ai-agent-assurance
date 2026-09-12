@@ -1,0 +1,44 @@
+{
+  "systemId": "SYN-12",
+  "name": "Refund Dispatcher with Nominal Fail-Open Approval Webhook",
+  "version": "1.0.0",
+  "capturedAt": "2026-09-12T12:00:00Z",
+  "description": "Nominal approval webhook that specifies timeout_ms=0 with default_action=allow (fails open).",
+  "nodes": [
+    {
+      "id": "node-agent",
+      "nodeType": "agent",
+      "name": "Refund Automation Agent",
+      "metadata": { "trust_boundary": "internal" }
+    },
+    {
+      "id": "node-stripe-api",
+      "nodeType": "api",
+      "name": "Stripe Gateway API",
+      "metadata": { "trust_boundary": "external" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-agent-to-stripe",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-stripe-api",
+      "edgeType": "calls",
+      "actionReversibility": "irreversible",
+      "requiresHumanApproval": true,
+      "trustBoundary": "external",
+      "permissionScope": "refund:execute",
+      "controlSemantics": {
+        "controlId": "ctrl-webhook-fail-open",
+        "name": "Slack Approval Webhook",
+        "controlPresent": true,
+        "controlEnforced": false,
+        "executionPoint": "pre_execution",
+        "failMode": "fail_open",
+        "defaultAction": "allow",
+        "timeoutMs": 0,
+        "bypassConditions": ["timeout_on_slack_down"]
+      }
+    }
+  ]
+}

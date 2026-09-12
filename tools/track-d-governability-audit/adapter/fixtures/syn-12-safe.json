@@ -1,0 +1,43 @@
+{
+  "systemId": "SYN-12-safe",
+  "name": "Refund Dispatcher with Hardened Fail-Closed Approval Webhook",
+  "version": "1.0.0",
+  "capturedAt": "2026-09-12T12:00:00Z",
+  "description": "Hardened approval webhook that specifies timeout_ms=5000 with default_action=deny (fails closed).",
+  "nodes": [
+    {
+      "id": "node-agent",
+      "nodeType": "agent",
+      "name": "Refund Automation Agent",
+      "metadata": { "trust_boundary": "internal" }
+    },
+    {
+      "id": "node-stripe-api",
+      "nodeType": "api",
+      "name": "Stripe Gateway API",
+      "metadata": { "trust_boundary": "external" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-agent-to-stripe",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-stripe-api",
+      "edgeType": "calls",
+      "actionReversibility": "irreversible",
+      "requiresHumanApproval": true,
+      "trustBoundary": "external",
+      "permissionScope": "refund:execute",
+      "controlSemantics": {
+        "controlId": "ctrl-webhook-fail-closed",
+        "name": "Hardened Slack Approval Webhook",
+        "controlPresent": true,
+        "controlEnforced": true,
+        "executionPoint": "pre_execution",
+        "failMode": "fail_closed",
+        "defaultAction": "deny",
+        "timeoutMs": 5000
+      }
+    }
+  ]
+}

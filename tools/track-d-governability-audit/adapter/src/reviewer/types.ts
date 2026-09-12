@@ -81,6 +81,8 @@ export interface ContradictionDecision {
   createdAt: string;
 }
 
+import type { PathReference, FindingStage } from '../paths/types';
+
 /**
  * Finding representation within the Canonical Assessment Object.
  * Preserves the 5 trust layers explicitly.
@@ -91,6 +93,8 @@ export interface CanonicalFinding {
   frameworkRefs: string[];
   authorityMapNodeId?: string;
   authorityMapEdgeId?: string;
+  pathReference?: PathReference;
+  findingStage?: FindingStage;
   title: string;
   description: string;
   basis: string;

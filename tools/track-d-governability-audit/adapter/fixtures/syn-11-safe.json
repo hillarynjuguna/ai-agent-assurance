@@ -1,0 +1,90 @@
+{
+  "systemId": "SYN-11-safe",
+  "name": "E-Commerce Support Agent with Enforced Boundary Gates",
+  "version": "1.0.0",
+  "capturedAt": "2026-09-12T12:00:00Z",
+  "description": "Legitimate composed path: Inbound Customer Email -> Agent -> CRM Contact Write -> SendGrid Outbound Email WITH pre-execution sanitization and fail-closed approval gate.",
+  "nodes": [
+    {
+      "id": "node-inbound-email",
+      "nodeType": "data_source",
+      "name": "Inbound Customer Email Stream",
+      "metadata": { "trust_boundary": "external" }
+    },
+    {
+      "id": "node-agent",
+      "nodeType": "agent",
+      "name": "Customer Operations Agent",
+      "metadata": { "role": "customer_support" }
+    },
+    {
+      "id": "node-crm-api",
+      "nodeType": "api",
+      "name": "HubSpot CRM API",
+      "metadata": { "trust_boundary": "external" }
+    },
+    {
+      "id": "node-sendgrid-api",
+      "nodeType": "api",
+      "name": "SendGrid Outbound Email API",
+      "metadata": { "trust_boundary": "external" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-email-to-agent",
+      "sourceNodeId": "node-inbound-email",
+      "targetNodeId": "node-agent",
+      "edgeType": "reads",
+      "actionReversibility": "reversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "mail:inbox_read",
+      "dataFlow": "ingress"
+    },
+    {
+      "id": "edge-agent-to-crm",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-crm-api",
+      "edgeType": "writes",
+      "actionReversibility": "partially_reversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "crm:contacts:write",
+      "mutatesState": "persistent_storage",
+      "carriesSensitiveData": true,
+      "controlSemantics": {
+        "controlId": "ctrl-crm-sanitizer",
+        "name": "CRM Input Sanitization Boundary",
+        "controlPresent": true,
+        "controlEnforced": true,
+        "sanitizationBoundary": true,
+        "executionPoint": "pre_execution",
+        "failMode": "fail_closed",
+        "defaultAction": "deny"
+      }
+    },
+    {
+      "id": "edge-agent-to-sendgrid",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-sendgrid-api",
+      "edgeType": "calls",
+      "actionReversibility": "irreversible",
+      "requiresHumanApproval": true,
+      "trustBoundary": "external",
+      "permissionScope": "mail:send_restricted",
+      "dataFlow": "egress",
+      "externalSideEffect": true,
+      "controlSemantics": {
+        "controlId": "ctrl-email-gate",
+        "name": "Human Approval Dispatch Gate",
+        "controlPresent": true,
+        "controlEnforced": true,
+        "executionPoint": "pre_execution",
+        "failMode": "fail_closed",
+        "defaultAction": "deny",
+        "timeoutMs": 60000
+      }
+    }
+  ]
+}

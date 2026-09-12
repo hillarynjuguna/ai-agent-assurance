@@ -1,0 +1,70 @@
+{
+  "systemId": "SYN-11",
+  "name": "E-Commerce Support Agent with Composed Exfiltration Path",
+  "version": "1.0.0",
+  "capturedAt": "2026-09-12T12:00:00Z",
+  "description": "Exposes composed indirect injection path: Inbound Customer Email -> Agent -> HubSpot CRM Contact Write -> SendGrid Outbound Email without sanitization or approval gates.",
+  "nodes": [
+    {
+      "id": "node-inbound-email",
+      "nodeType": "data_source",
+      "name": "Inbound Customer Email Stream",
+      "metadata": { "trust_boundary": "external" }
+    },
+    {
+      "id": "node-agent",
+      "nodeType": "agent",
+      "name": "Customer Operations Agent",
+      "metadata": { "role": "customer_support" }
+    },
+    {
+      "id": "node-crm-api",
+      "nodeType": "api",
+      "name": "HubSpot CRM API",
+      "metadata": { "trust_boundary": "external" }
+    },
+    {
+      "id": "node-sendgrid-api",
+      "nodeType": "api",
+      "name": "SendGrid Outbound Email API",
+      "metadata": { "trust_boundary": "external" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-email-to-agent",
+      "sourceNodeId": "node-inbound-email",
+      "targetNodeId": "node-agent",
+      "edgeType": "reads",
+      "actionReversibility": "reversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "mail:inbox_read",
+      "dataFlow": "ingress"
+    },
+    {
+      "id": "edge-agent-to-crm",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-crm-api",
+      "edgeType": "writes",
+      "actionReversibility": "partially_reversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "crm:contacts:write",
+      "mutatesState": "persistent_storage",
+      "carriesSensitiveData": true
+    },
+    {
+      "id": "edge-agent-to-sendgrid",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-sendgrid-api",
+      "edgeType": "calls",
+      "actionReversibility": "irreversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "mail:send_unrestricted",
+      "dataFlow": "egress",
+      "externalSideEffect": true
+    }
+  ]
+}

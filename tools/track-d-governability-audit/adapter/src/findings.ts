@@ -1,6 +1,7 @@
 import { CandidateFinding, FindingSeverity, FindingConfidence } from './rules/types';
 import type { EvidenceLevel } from './assurance-types';
 import type { FindingDisposition } from './reviewer/types';
+import type { PathReference, FindingStage } from './paths/types';
 
 export interface AssessmentFinding {
   id: string;
@@ -8,6 +9,8 @@ export interface AssessmentFinding {
   frameworkRefs: string[];
   authorityMapNodeId?: string;
   authorityMapEdgeId?: string;
+  pathReference?: PathReference;
+  findingStage?: FindingStage;
   title: string;
   description: string;
   basis: string;
@@ -30,7 +33,8 @@ export interface AssessmentFinding {
  * 
  * Invariants Enforced:
  * - Invariant 1: Claim != Evidence. Finding evidence_level is strictly capped at E1_documented.
- * - Invariant 8: Traceability. Every finding is linked to an Authority Map node or edge ID.
+ * - Invariant 8: Traceability. Every finding is linked to an Authority Map node, edge, or path reference.
+ * - Invariant P7-3: Candidate Gating. Newly drafted findings enter at findingStage = 'candidate'.
  * - Provenance Invariant: baselineSeverity remains immutable; effectiveSeverity starts equal to baseline with 'unresolved' disposition.
  * - No composite scoring or severity dilution.
  */
@@ -50,6 +54,8 @@ export function generateAssessmentFindings(
       frameworkRefs: cf.frameworkRefs,
       authorityMapNodeId: cf.authorityMapNodeId,
       authorityMapEdgeId: cf.authorityMapEdgeId,
+      pathReference: cf.pathReference,
+      findingStage: 'candidate',
       title: cf.description.length > 80 ? `${cf.description.substring(0, 77)}...` : cf.description,
       description: cf.description,
       basis: cf.basis,

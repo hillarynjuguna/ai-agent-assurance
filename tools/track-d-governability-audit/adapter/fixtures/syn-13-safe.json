@@ -1,0 +1,47 @@
+{
+  "systemId": "SYN-13-safe",
+  "name": "Dispute Processor with Temporal Cumulative Velocity Limit",
+  "version": "1.0.0",
+  "capturedAt": "2026-09-12T12:00:00Z",
+  "description": "Payment tool with $50 scalar limit AND enforceable $50 per 24-hour cumulative cap.",
+  "nodes": [
+    {
+      "id": "node-agent",
+      "nodeType": "agent",
+      "name": "Dispute Settlement Agent",
+      "metadata": { "trust_boundary": "internal" }
+    },
+    {
+      "id": "node-payout-api",
+      "nodeType": "api",
+      "name": "Bank Transfer Payout API",
+      "metadata": { "trust_boundary": "external" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-agent-to-payout",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-payout-api",
+      "edgeType": "calls",
+      "actionReversibility": "irreversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "payout:execute_autonomous_under_50",
+      "temporalConstraint": {
+        "scalarLimit": {
+          "maxAmount": 50,
+          "currency": "USD"
+        },
+        "temporalLimit": {
+          "windowSeconds": 86400,
+          "maxCumulativeAmount": 50
+        },
+        "rateLimit": {
+          "maxRequests": 1,
+          "periodSeconds": 86400
+        }
+      }
+    }
+  ]
+}

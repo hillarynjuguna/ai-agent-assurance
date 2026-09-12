@@ -97,6 +97,11 @@ export function renderAssessmentMarkdown(
     lines.push(`**Framework References:** ${f.frameworkRefs.map(r => `\`${r}\``).join(', ')}  `);
     if (f.authorityMapEdgeId) lines.push(`**Authority Map Edge:** \`${f.authorityMapEdgeId}\`  `);
     if (f.authorityMapNodeId) lines.push(`**Authority Map Node:** \`${f.authorityMapNodeId}\`  `);
+    if (f.pathReference) {
+      lines.push(`**Authority Path Reference:** \`${f.pathReference.pathId}\` (\`${f.pathReference.nodeIds.length - 1}\` hops, hash: \`${f.pathReference.pathHash.slice(0, 12)}...\`)  `);
+      lines.push(`**Path Traversal Sequence:** ${f.pathReference.nodeIds.map(n => `\`${n}\``).join(' → ')}  `);
+    }
+    if (f.findingStage) lines.push(`**Finding Stage:** \`${f.findingStage}\`  `);
     lines.push(`**Recognized Evidence Level:** \`${f.evidenceLevel}\`  `);
     lines.push(`**Finding Status:** \`${f.status}\`  `);
     lines.push('');

@@ -24,22 +24,51 @@ export type {
   AuthorityElementProvenance 
 } from './authority-map-seed';
 
-// Phase 3: Deterministic Rules Engine
+// Phase 3 & 7: Deterministic Rules Engine & 4-Layer Authority Evaluation
 export { 
   executeDeterministicRules,
+  executeFullAuthorityEvaluation,
+  evaluateEdgeLevelRules,
+  evaluatePathLevelRules,
+  evaluateControlSemanticsRules,
+  evaluateTemporalRules,
   evaluateRule1IrreversibleNoApproval,
   evaluateRule2ExternalDelegation,
   evaluateRule3SharedIdentity,
-  evaluateD10ContainmentRule
+  evaluateD10ContainmentRule,
+  evaluateRule5ComposedPath,
+  evaluateRule6ControlSemantics,
+  evaluateRule7TemporalConstraints
 } from './rules/index';
 export type { 
   CandidateFinding, 
   AuthorityMapEdgeInput, 
   AuthorityMapNodeInput, 
-  RuleExecutionResult 
+  RuleExecutionResult,
+  RuleExecutionOptions
 } from './rules/index';
 
-// Phase 3: Finding Generator
+// Phase 7: Path Traversal, Control Semantics & Temporal Models
+export {
+  findSecurityRelevantPaths,
+  createPathReference,
+  TRAVERSAL_ALGORITHM_VERSION
+} from './paths/index';
+export type {
+  AuthorityPath,
+  PathReference,
+  ControlSemantics,
+  ControlExecutionPoint,
+  ControlFailMode,
+  ControlDefaultAction,
+  TemporalConstraint,
+  FindingStage,
+  DataFlowClassification,
+  StateMutationType,
+  TraversalOptions
+} from './paths/index';
+
+// Phase 3 & 7: Finding Generator
 export { generateAssessmentFindings } from './findings';
 export type { AssessmentFinding } from './findings';
 
@@ -76,4 +105,3 @@ export type {
   AdversarialTestRecord,
   EpistemicEvidenceRecord
 } from './assurance-types';
-

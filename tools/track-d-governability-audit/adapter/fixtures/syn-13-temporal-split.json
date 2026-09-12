@@ -1,0 +1,42 @@
+{
+  "systemId": "SYN-13",
+  "name": "Dispute Processor with Static Transaction Limit Deficient in Temporal Window",
+  "version": "1.0.0",
+  "capturedAt": "2026-09-12T12:00:00Z",
+  "description": "Payment tool with nominal $50 scalar limit but zero temporal window or cumulative cap, vulnerable to split-transaction bypass.",
+  "nodes": [
+    {
+      "id": "node-agent",
+      "nodeType": "agent",
+      "name": "Dispute Settlement Agent",
+      "metadata": { "trust_boundary": "internal" }
+    },
+    {
+      "id": "node-payout-api",
+      "nodeType": "api",
+      "name": "Bank Transfer Payout API",
+      "metadata": { "trust_boundary": "external" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-agent-to-payout",
+      "sourceNodeId": "node-agent",
+      "targetNodeId": "node-payout-api",
+      "edgeType": "calls",
+      "actionReversibility": "irreversible",
+      "requiresHumanApproval": false,
+      "trustBoundary": "external",
+      "permissionScope": "payout:execute_autonomous_under_50",
+      "temporalConstraint": {
+        "scalarLimit": {
+          "maxAmount": 50,
+          "currency": "USD"
+        },
+        "temporalLimit": {
+          "windowSeconds": 0
+        }
+      }
+    }
+  ]
+}
